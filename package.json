@@ -1,6 +1,6 @@
 {
   "name": "activepieces-beliq",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "beliq connector for Activepieces: generate, validate, parse, and convert EU-compliant e-invoices (XRechnung, ZUGFeRD, Factur-X, Peppol BIS).",
   "keywords": [
     "activepieces",
