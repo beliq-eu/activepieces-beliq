@@ -12,7 +12,7 @@ export const beliq = createPiece({
     'Generate, validate, parse, and convert EU-compliant e-invoices (XRechnung, ZUGFeRD, Factur-X, Peppol BIS) against authority-pinned, drift-checked rules.',
   auth: beliqAuth,
   minimumSupportedRelease: '0.82.0',
-  logoUrl: 'https://beliq.eu/beliq-avatar.png',
+  logoUrl: 'https://beliq.eu/beliq-avatar-light.png',
   categories: [PieceCategory.ACCOUNTING, PieceCategory.CONTENT_AND_FILES],
   authors: ['beliq-eu'],
   actions: [generateAction, validateAction, parseAction, convertAction],
