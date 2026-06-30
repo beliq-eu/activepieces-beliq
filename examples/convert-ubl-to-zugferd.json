@@ -1,0 +1,55 @@
+{
+  "name": "Convert UBL to ZUGFeRD from a webhook",
+  "description": "Receive a UBL invoice on a webhook and convert it to a ZUGFeRD (EN 16931) hybrid PDF with beliq.",
+  "tags": ["e-invoice", "convert", "zugferd", "ubl", "beliq"],
+  "pieces": ["@activepieces/piece-webhook", "activepieces-beliq"],
+  "blogUrl": "",
+  "template": {
+    "displayName": "Convert UBL to ZUGFeRD from a webhook",
+    "valid": true,
+    "schemaVersion": "1",
+    "trigger": {
+      "name": "trigger",
+      "type": "PIECE_TRIGGER",
+      "valid": true,
+      "displayName": "Catch Webhook",
+      "settings": {
+        "pieceName": "@activepieces/piece-webhook",
+        "pieceVersion": "~0.1.5",
+        "pieceType": "OFFICIAL",
+        "packageType": "REGISTRY",
+        "triggerName": "catch_webhook",
+        "input": { "authType": "none", "authFields": {} },
+        "inputUiInfo": { "customizedInputs": {} }
+      },
+      "nextAction": {
+        "name": "step_1",
+        "type": "PIECE",
+        "valid": true,
+        "displayName": "Convert Invoice",
+        "settings": {
+          "pieceName": "activepieces-beliq",
+          "pieceVersion": "~0.1.0",
+          "pieceType": "CUSTOM",
+          "packageType": "REGISTRY",
+          "actionName": "convert_invoice",
+          "input": {
+            "inputSource": "text",
+            "documentText": "{{trigger.body.xml}}",
+            "contentType": "auto",
+            "sourceFormat": "ubl",
+            "targetFormat": "zugferd",
+            "targetProfile": "en16931",
+            "dropFranceCtcOverlay": false,
+            "advanced": {}
+          },
+          "inputUiInfo": { "customizedInputs": {} },
+          "errorHandlingOptions": {
+            "continueOnFailure": { "value": false },
+            "retryOnFailure": { "value": false }
+          }
+        }
+      }
+    }
+  }
+}

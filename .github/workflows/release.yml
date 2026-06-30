@@ -1,0 +1,51 @@
+name: Release
+
+# Publishes to npm via Trusted Publishing (OIDC), no NPM_TOKEN needed.
+# Provenance attestations are generated automatically. Trigger by pushing a
+# version tag (e.g. v0.1.1) or running the workflow manually. Requires the npm
+# Trusted Publisher to be configured for this package first (see the roadmap in
+# tools/CONNECTORS-ROADMAP.md).
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # required for npm Trusted Publishing (OIDC)
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest # Trusted Publishing requires a cloud-hosted runner
+    steps:
+      - uses: actions/checkout@v4
+
+      # No registry-url: with it, setup-node writes a token-auth .npmrc that npm
+      # uses instead of OIDC and fails with a misleading 404/ENEEDAUTH. Without
+      # it npm defaults to registry.npmjs.org and uses Trusted Publishing.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Trusted Publishing + automatic provenance need npm >= 11.5.1.
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Scrub em-dashes
+        run: npm run scrub:check
+
+      - name: Publish to npm
+        run: npm publish ./dist

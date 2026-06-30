@@ -1,0 +1,76 @@
+{
+  "name": "Generate an XRechnung on a schedule",
+  "description": "Generate a compliant XRechnung XML document on a schedule, ready to hand to your access point or archive step.",
+  "tags": ["e-invoice", "xrechnung", "generate", "beliq"],
+  "pieces": ["@activepieces/piece-schedule", "activepieces-beliq"],
+  "blogUrl": "",
+  "template": {
+    "displayName": "Generate an XRechnung on a schedule",
+    "valid": true,
+    "schemaVersion": "1",
+    "trigger": {
+      "name": "trigger",
+      "type": "PIECE_TRIGGER",
+      "valid": true,
+      "displayName": "Cron Expression",
+      "settings": {
+        "pieceName": "@activepieces/piece-schedule",
+        "pieceVersion": "~0.1.5",
+        "pieceType": "OFFICIAL",
+        "packageType": "REGISTRY",
+        "triggerName": "cron_expression",
+        "input": { "cronExpression": "0 6 1 * *", "timezone": "UTC" },
+        "inputUiInfo": { "customizedInputs": {} }
+      },
+      "nextAction": {
+        "name": "step_1",
+        "type": "PIECE",
+        "valid": true,
+        "displayName": "Generate Invoice",
+        "settings": {
+          "pieceName": "activepieces-beliq",
+          "pieceVersion": "~0.1.0",
+          "pieceType": "CUSTOM",
+          "packageType": "REGISTRY",
+          "actionName": "generate_invoice",
+          "input": {
+            "standard": "xrechnung",
+            "output": "xml",
+            "verify": true,
+            "invoice": {
+              "number": "INV-2026-001",
+              "issueDate": "2026-01-15",
+              "dueDate": "2026-02-14",
+              "currencyCode": "EUR",
+              "buyerReference": "BUYER-REF-01",
+              "seller": {
+                "name": "Seller GmbH",
+                "vatId": "DE123456789",
+                "address": { "street": "Hauptstrasse 1", "city": "Berlin", "postalCode": "10115", "countryCode": "DE" }
+              },
+              "buyer": {
+                "name": "Buyer SARL",
+                "vatId": "FR12345678901",
+                "address": { "street": "Rue de la Paix 2", "city": "Paris", "postalCode": "75002", "countryCode": "FR" }
+              },
+              "lines": [
+                { "description": "Consulting services", "quantity": 10, "unitCode": "HUR", "unitPrice": 100, "lineTotal": 1000, "vatRate": 19, "vatCategoryCode": "S" }
+              ],
+              "taxSummary": [ { "vatCategoryCode": "S", "vatRate": 19, "taxableAmount": 1000, "taxAmount": 190 } ],
+              "paymentMeans": { "typeCode": "58", "iban": "DE89370400440532013000" },
+              "totalNetAmount": 1000,
+              "totalTaxAmount": 190,
+              "totalGrossAmount": 1190
+            },
+            "advanced": {}
+          },
+          "inputUiInfo": { "customizedInputs": {} },
+          "errorHandlingOptions": {
+            "continueOnFailure": { "value": false },
+            "retryOnFailure": { "value": false }
+          }
+        }
+      }
+    }
+  }
+}

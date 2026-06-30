@@ -1,0 +1,53 @@
+{
+  "name": "Validate an invoice from a webhook",
+  "description": "Receive an XML invoice on a webhook and check it against beliq's authority-pinned rules, returning a structured verdict.",
+  "tags": ["e-invoice", "validate", "beliq"],
+  "pieces": ["@activepieces/piece-webhook", "activepieces-beliq"],
+  "blogUrl": "",
+  "template": {
+    "displayName": "Validate an invoice from a webhook",
+    "valid": true,
+    "schemaVersion": "1",
+    "trigger": {
+      "name": "trigger",
+      "type": "PIECE_TRIGGER",
+      "valid": true,
+      "displayName": "Catch Webhook",
+      "settings": {
+        "pieceName": "@activepieces/piece-webhook",
+        "pieceVersion": "~0.1.5",
+        "pieceType": "OFFICIAL",
+        "packageType": "REGISTRY",
+        "triggerName": "catch_webhook",
+        "input": { "authType": "none", "authFields": {} },
+        "inputUiInfo": { "customizedInputs": {} }
+      },
+      "nextAction": {
+        "name": "step_1",
+        "type": "PIECE",
+        "valid": true,
+        "displayName": "Validate Invoice",
+        "settings": {
+          "pieceName": "activepieces-beliq",
+          "pieceVersion": "~0.1.0",
+          "pieceType": "CUSTOM",
+          "packageType": "REGISTRY",
+          "actionName": "validate_invoice",
+          "input": {
+            "inputSource": "text",
+            "documentText": "{{trigger.body.xml}}",
+            "contentType": "auto",
+            "format": "auto",
+            "franceCtc": false,
+            "advanced": {}
+          },
+          "inputUiInfo": { "customizedInputs": {} },
+          "errorHandlingOptions": {
+            "continueOnFailure": { "value": false },
+            "retryOnFailure": { "value": false }
+          }
+        }
+      }
+    }
+  }
+}
