@@ -268,17 +268,11 @@ describe('resolveDocument', () => {
 
 describe('resolveAuth', () => {
   it('reads the bare props shape (validate hook)', () => {
-    expect(resolveAuth({ apiKey: 'k', baseUrl: 'https://x' })).toEqual({
-      apiKey: 'k',
-      baseUrl: 'https://x',
-    });
+    expect(resolveAuth({ apiKey: 'k' })).toEqual({ apiKey: 'k' });
   });
 
   it('reads the wrapped props shape (action context)', () => {
-    expect(resolveAuth({ type: 'CUSTOM_AUTH', props: { apiKey: 'k', baseUrl: '' } })).toEqual({
-      apiKey: 'k',
-      baseUrl: '',
-    });
+    expect(resolveAuth({ type: 'CUSTOM_AUTH', props: { apiKey: 'k' } })).toEqual({ apiKey: 'k' });
   });
 });
 
