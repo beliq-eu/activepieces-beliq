@@ -2,7 +2,6 @@ import { Beliq, BeliqApiError } from '@beliq/sdk';
 
 export interface BeliqAuthValue {
   apiKey: string;
-  baseUrl: string;
 }
 
 /**
@@ -18,14 +17,13 @@ export function resolveAuth(auth: unknown): BeliqAuthValue {
       : raw;
   return {
     apiKey: String(props['apiKey'] ?? ''),
-    baseUrl: String(props['baseUrl'] ?? ''),
   };
 }
 
 /** Build a configured SDK client from a resolved connection value. */
 export function createClient(auth: unknown): Beliq {
-  const { apiKey, baseUrl } = resolveAuth(auth);
-  return new Beliq({ apiKey, baseUrl: baseUrl || undefined });
+  const { apiKey } = resolveAuth(auth);
+  return new Beliq({ apiKey });
 }
 
 /**

@@ -1,12 +1,10 @@
 import { BeliqApiError } from '@beliq/sdk';
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework';
 import { createClient, resolveAuth } from './client';
 
 const AUTH_GUIDE = `Get an API key from the beliq dashboard (dashboard.beliq.eu, API Keys).
 
-The connection test calls GET /v1/me, a no-quota credential check, so validating never touches your monthly quota.
-
-Leave **Base URL** at the default unless you run a self-hosted or staging deployment.`;
+The connection test calls GET /v1/me, a no-quota credential check, so validating never touches your monthly quota.`;
 
 export const beliqAuth = PieceAuth.CustomAuth({
   description: AUTH_GUIDE,
@@ -16,12 +14,6 @@ export const beliqAuth = PieceAuth.CustomAuth({
       displayName: 'API Key',
       description: 'Your beliq API key from dashboard.beliq.eu (API Keys).',
       required: true,
-    }),
-    baseUrl: Property.ShortText({
-      displayName: 'Base URL',
-      description: 'Override only for a self-hosted or staging deployment.',
-      required: false,
-      defaultValue: 'https://api.beliq.eu',
     }),
   },
   validate: async ({ auth }) => {

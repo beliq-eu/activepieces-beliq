@@ -19,7 +19,7 @@ For a self-hosted instance you can also upload a built tarball via **Platform Ad
 
 ## Connection
 
-Create a **beliq** connection with an API key from [dashboard.beliq.eu](https://dashboard.beliq.eu) (API Keys). The connection test calls `GET /v1/me`, a no-quota credential check, so validating the connection never touches your monthly quota. Leave **Base URL** at the default unless you run a self-hosted or staging deployment.
+Create a **beliq** connection with an API key from [dashboard.beliq.eu](https://dashboard.beliq.eu) (API Keys). The connection test calls `GET /v1/me`, a no-quota credential check, so validating the connection never touches your monthly quota.
 
 ## Document input
 
