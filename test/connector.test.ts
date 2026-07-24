@@ -189,6 +189,29 @@ describe('runGenerate', () => {
     expect(result.sizeBytes).toBeGreaterThan(0);
   });
 
+  it('resolves the NLCIUS target to peppol-bis + the netherlands-nlcius profile', async () => {
+    const { client, calls } = clientReturning(
+      () =>
+        new Response('<Invoice/>', {
+          status: 200,
+          headers: { 'content-type': 'application/xml' },
+        }),
+    );
+    const { files } = recordingFiles();
+
+    await runGenerate(
+      client,
+      { standard: 'nlcius', output: 'pdf', invoice: { number: 'NL-1' }, verify: false },
+      files,
+    );
+
+    const sentBody = JSON.parse(bodyText(calls[0].body));
+    expect(sentBody.standard).toBe('peppol-bis');
+    expect(sentBody.profile).toBe('netherlands-nlcius');
+    // NLCIUS is a UBL profile: the preset forces XML even though pdf was passed.
+    expect(sentBody.output).toBe('xml');
+  });
+
   it('includes the Factur-X profile only for the hybrid family', async () => {
     const { client, calls } = clientReturning(
       () =>
@@ -289,6 +312,7 @@ describe('option lists', () => {
       'zugferd',
       'facturx',
       'peppol-bis',
+      'nlcius',
     ]);
     expect(VALIDATE_FORMAT_OPTIONS.map((o) => o.value)).toContain('auto');
     // A convert target can never be auto-detected.
