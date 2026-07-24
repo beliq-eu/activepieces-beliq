@@ -1,9 +1,15 @@
-import type { Beliq, FacturxProfile, GenerateInput, Invoice, Standard } from '@beliq/sdk';
+import type { Beliq, FacturxProfile, GenerateInput, Invoice } from '@beliq/sdk';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { beliqAuth } from '../common/auth';
 import { asJsonObject, createClient, mapError } from '../common/client';
 import { type FilesWriter, writeDocument } from '../common/io';
-import { isFacturxFamily, OUTPUT_OPTIONS, PROFILE_OPTIONS, STANDARD_OPTIONS } from '../common/options';
+import {
+  isFacturxFamily,
+  OUTPUT_OPTIONS,
+  PROFILE_OPTIONS,
+  resolveGenerateTarget,
+  STANDARD_OPTIONS,
+} from '../common/options';
 
 const SAMPLE_INVOICE = {
   number: 'INV-2026-001',
@@ -44,15 +50,17 @@ export async function runGenerate(
   props: Record<string, unknown>,
   files: FilesWriter,
 ): Promise<unknown> {
-  const standard = props['standard'] as Standard;
+  const target = resolveGenerateTarget(props['standard'] as string);
   const input: GenerateInput = {
-    standard,
+    standard: target.standard,
     invoice: (asJsonObject(props['invoice']) ?? {}) as Invoice,
-    output: (props['output'] as 'xml' | 'pdf') ?? 'xml',
+    output: target.output ?? (props['output'] as 'xml' | 'pdf') ?? 'xml',
     verify: props['verify'] === true,
     advanced: asJsonObject(props['advanced']),
   };
-  if (isFacturxFamily(standard) && props['facturxProfile']) {
+  if (target.profile) {
+    input.profile = target.profile as GenerateInput['profile'];
+  } else if (isFacturxFamily(target.standard) && props['facturxProfile']) {
     input.facturxProfile = props['facturxProfile'] as FacturxProfile;
   }
   const pdfTemplateId = ((props['pdfTemplateId'] as string) ?? '').trim();
