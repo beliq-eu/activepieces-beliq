@@ -19,14 +19,14 @@ jobs:
   publish:
     runs-on: ubuntu-latest # Trusted Publishing requires a cloud-hosted runner
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # No registry-url: with it, setup-node writes a token-auth .npmrc that npm
       # uses instead of OIDC and fails with a misleading 404/ENEEDAUTH. Without
       # it npm defaults to registry.npmjs.org and uses Trusted Publishing.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: '24'
 
       # Trusted Publishing + automatic provenance need npm >= 11.5.1.
       - name: Upgrade npm
