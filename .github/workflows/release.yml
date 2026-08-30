@@ -4,7 +4,7 @@ name: Release
 # Provenance attestations are generated automatically. Trigger by pushing a
 # version tag (e.g. v0.1.1) or running the workflow manually. Requires the npm
 # Trusted Publisher to be configured for this package first (see the roadmap in
-# tools/CONNECTORS-ROADMAP.md).
+# beliq-hq/CONNECTORS-ROADMAP.md).
 on:
   push:
     tags:
