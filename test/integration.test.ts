@@ -56,52 +56,71 @@ const SAMPLE_INVOICE = {
 
 const makeClient = () => new Beliq({ apiKey: API_KEY as string, baseUrl: BASE_URL });
 
+// The preflight job checks the budget before this suite starts, but another repo
+// sharing the key can take the last documents in between. A spent quota means the
+// contract could not be checked, not that it is broken, so it lands in the same
+// arm as a missing key: skip, and say so loudly enough to reach the run summary.
+//
+// Matched on the message because these run handlers are driven the way Activepieces
+// drives them, and `mapError` flattens the SDK's BeliqApiError into a plain Error
+// carrying the code in parentheses (src/lib/common/client.ts).
+const isQuotaExhausted = (err: unknown): boolean =>
+  err instanceof Error && err.message.endsWith('(QUOTA_EXCEEDED)');
+
 describe.skipIf(!API_KEY)('beliq live API', () => {
   it('me() returns account context without spending quota', async () => {
     const account = await makeClient().me();
     expect(account).toBeTruthy();
   });
 
-  it('generate -> validate -> parse -> convert round trip', async () => {
+  it('generate -> validate -> parse -> convert round trip', async (ctx) => {
     const client = makeClient();
-    const generated = (await runGenerate(
-      client,
-      { standard: 'xrechnung', output: 'xml', invoice: SAMPLE_INVOICE, verify: false },
-      memoryFiles(),
-    )) as Record<string, unknown>;
-    expect(generated.fileName).toBe('invoice.xml');
-    const xml = generated.xml as string;
-    expect(xml).toContain('<');
+    try {
+      const generated = (await runGenerate(
+        client,
+        { standard: 'xrechnung', output: 'xml', invoice: SAMPLE_INVOICE, verify: false },
+        memoryFiles(),
+      )) as Record<string, unknown>;
+      expect(generated.fileName).toBe('invoice.xml');
+      const xml = generated.xml as string;
+      expect(xml).toContain('<');
 
-    const verdict = (await runValidate(client, {
-      inputSource: 'text',
-      documentText: xml,
-      contentType: 'auto',
-      format: 'auto',
-    })) as Record<string, unknown>;
-    expect(typeof verdict.valid).toBe('boolean');
-    expect(verdict.format).toBeTruthy();
-
-    const parsed = (await runParse(client, {
-      inputSource: 'text',
-      documentText: xml,
-      contentType: 'auto',
-      format: 'auto',
-    })) as Record<string, unknown>;
-    expect(parsed).toBeTruthy();
-
-    const converted = (await runConvert(
-      client,
-      {
+      const verdict = (await runValidate(client, {
         inputSource: 'text',
         documentText: xml,
         contentType: 'auto',
-        sourceFormat: 'auto',
-        targetFormat: 'ubl',
-      },
-      memoryFiles(),
-    )) as Record<string, unknown>;
-    expect(converted.success).toBe(true);
-    expect(converted.fileName).toBeTruthy();
+        format: 'auto',
+      })) as Record<string, unknown>;
+      expect(typeof verdict.valid).toBe('boolean');
+      expect(verdict.format).toBeTruthy();
+
+      const parsed = (await runParse(client, {
+        inputSource: 'text',
+        documentText: xml,
+        contentType: 'auto',
+        format: 'auto',
+      })) as Record<string, unknown>;
+      expect(parsed).toBeTruthy();
+
+      const converted = (await runConvert(
+        client,
+        {
+          inputSource: 'text',
+          documentText: xml,
+          contentType: 'auto',
+          sourceFormat: 'auto',
+          targetFormat: 'ubl',
+        },
+        memoryFiles(),
+      )) as Record<string, unknown>;
+      expect(converted.success).toBe(true);
+      expect(converted.fileName).toBeTruthy();
+    } catch (err) {
+      if (!isQuotaExhausted(err)) throw err;
+      console.warn(
+        '::warning::beliq API monthly quota is spent, so the live contract was NOT verified by this run.',
+      );
+      ctx.skip();
+    }
   });
 });
