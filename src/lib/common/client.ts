@@ -27,13 +27,46 @@ export function createClient(auth: unknown): Beliq {
 }
 
 /**
+ * How many rule findings a message carries before it is truncated. An Activepieces
+ * step surfaces the error text and nothing else, so the findings have to fit a
+ * notification; XRechnung reports its rules one layer at a time anyway, so the
+ * first few are the ones worth acting on.
+ */
+const MAX_REPORTED_FINDINGS = 5;
+
+/**
+ * The failing rules a 422 `INVALID_INVOICE` carries in `details.validationResult`.
+ * Its `message` is the fixed string "Generated invoice failed validation", so
+ * without this the caller is told the document is invalid and never which rule
+ * said so, in a UI that cannot show them the HTTP response.
+ */
+function describeFindings(details: Record<string, unknown> | undefined): string {
+  const result = details?.['validationResult'];
+  if (!result || typeof result !== 'object') return '';
+  const errors = (result as { errors?: unknown }).errors;
+  if (!Array.isArray(errors) || errors.length === 0) return '';
+  const shown = errors.slice(0, MAX_REPORTED_FINDINGS).map((entry) => {
+    const { ruleId, message, location } = (entry ?? {}) as {
+      ruleId?: string;
+      message?: string;
+      location?: string;
+    };
+    return [ruleId, message, location ? `at ${location}` : undefined].filter(Boolean).join(' ');
+  });
+  const hidden = errors.length - shown.length;
+  return `: ${shown.join('; ')}${hidden > 0 ? ` (+${hidden} more)` : ''}`;
+}
+
+/**
  * Turn an SDK error into a flat Error with a readable message. A BeliqApiError
- * carries the typed `{ code, message }` from beliq's error envelope; anything
- * else is surfaced verbatim.
+ * carries the typed `{ code, message }` from beliq's error envelope plus any
+ * rule findings; anything else is surfaced verbatim. The stable `(CODE)` stays
+ * last so a caller can match on it.
  */
 export function mapError(error: unknown): Error {
   if (error instanceof BeliqApiError) {
-    return new Error(error.code ? `${error.message} (${error.code})` : error.message);
+    const body = `${error.message}${describeFindings(error.details)}`;
+    return new Error(error.code ? `${body} (${error.code})` : body);
   }
   return error instanceof Error ? error : new Error(String(error));
 }

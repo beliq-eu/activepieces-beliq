@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Beliq } from '@beliq/sdk';
+import { Beliq, BeliqApiError } from '@beliq/sdk';
 import { runGenerate } from '../src/lib/actions/generate';
 import { runValidate } from '../src/lib/actions/validate';
 import { runParse } from '../src/lib/actions/parse';
@@ -325,5 +325,50 @@ describe('asJsonObject / mapError', () => {
   it('passes a plain Error through unchanged', () => {
     const e = new Error('boom');
     expect(mapError(e)).toBe(e);
+  });
+
+  it('names the failing rules a 422 carries, with the code still last', () => {
+    const err = new BeliqApiError('Generated invoice failed validation', {
+      code: 'INVALID_INVOICE',
+      status: 422,
+      details: {
+        validationResult: {
+          valid: false,
+          errors: [
+            { ruleId: 'BR-DE-2', severity: 'error', message: 'seller contact', location: '/Invoice' },
+            { ruleId: 'BR-DE-1', severity: 'error', message: 'payment instructions' },
+          ],
+        },
+      },
+    });
+    const message = mapError(err).message;
+    expect(message).toContain('BR-DE-2 seller contact at /Invoice');
+    expect(message).toContain('BR-DE-1 payment instructions');
+    expect(message.endsWith('(INVALID_INVOICE)')).toBe(true);
+  });
+
+  it('truncates past five findings and says how many are hidden', () => {
+    const err = new BeliqApiError('Generated invoice failed validation', {
+      code: 'INVALID_INVOICE',
+      status: 422,
+      details: {
+        validationResult: {
+          errors: Array.from({ length: 8 }, (_, i) => ({ ruleId: `R-${i}`, message: `m${i}` })),
+        },
+      },
+    });
+    const message = mapError(err).message;
+    expect(message).toContain('R-4 m4');
+    expect(message).not.toContain('R-5');
+    expect(message).toContain('(+3 more)');
+  });
+
+  it('leaves the message alone when there are no findings to add', () => {
+    const err = new BeliqApiError('Monthly quota exceeded (20/20).', {
+      code: 'QUOTA_EXCEEDED',
+      status: 429,
+    });
+    // The live suite routes a spent quota by this exact suffix.
+    expect(mapError(err).message).toBe('Monthly quota exceeded (20/20). (QUOTA_EXCEEDED)');
   });
 });

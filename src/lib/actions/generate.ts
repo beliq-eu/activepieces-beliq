@@ -11,21 +11,30 @@ import {
   STANDARD_OPTIONS,
 } from '../common/options';
 
-const SAMPLE_INVOICE = {
+// The default the Activepieces form shows, and the fixture the live test
+// generates. It is a valid XRechnung, which takes three fields past a bare
+// EN 16931 invoice: the buyer's electronic address (BT-49, which beliq maps
+// from `buyer.email`), seller contact details (BR-DE-2) and payment
+// instructions (BR-DE-1). Drop any of them and `verify: true` answers 422.
+export const SAMPLE_INVOICE = {
   number: 'INV-2026-001',
   issueDate: '2026-01-15',
   dueDate: '2026-02-14',
   currencyCode: 'EUR',
-  buyerReference: 'BUYER-REF-01',
+  buyerReference: 'LEITWEG-01',
   seller: {
     name: 'Seller GmbH',
     vatId: 'DE123456789',
+    contactName: 'Anna Muster',
+    email: 'billing@seller.example',
+    phone: '+49 30 1234567',
     address: { street: 'Hauptstrasse 1', city: 'Berlin', postalCode: '10115', countryCode: 'DE' },
   },
   buyer: {
-    name: 'Buyer SARL',
-    vatId: 'FR12345678901',
-    address: { street: 'Rue de la Paix 2', city: 'Paris', postalCode: '75002', countryCode: 'FR' },
+    name: 'Buyer GmbH',
+    vatId: 'DE987654321',
+    email: 'ap@buyer.example',
+    address: { street: 'Marktplatz 2', city: 'Munich', postalCode: '80331', countryCode: 'DE' },
   },
   lines: [
     {
