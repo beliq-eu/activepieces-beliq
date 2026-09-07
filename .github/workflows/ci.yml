@@ -40,12 +40,12 @@ jobs:
         run: npm run scrub:check
 
   # test:integration drives the real run handlers against the live beliq API and
-  # spends 4 documents (generate, validate, parse, convert; me() is quota-exempt),
-  # against a key whose plan allows 20 a month shared with n8n-nodes-beliq and
-  # beliq-validate-action. Running it on pull_request as well as push paid twice
-  # for the same tree, so it runs on the merge and on demand; `test` is what gates
-  # a pull request. The preflight job then decides whether a run can complete
-  # before it spends anything.
+  # spends 4 documents (generate, validate, parse, convert; me() is quota-exempt).
+  # BELIQ_API_KEY is a `blq_test_` sandbox key: it runs the full rule stack but
+  # draws on the sandbox allowance instead of the plan quota. Running it on
+  # pull_request as well as push paid twice for the same tree, so it runs on the
+  # merge and on demand; `test` is what gates a pull request. The preflight job
+  # then decides whether a run can complete before it spends anything.
   #
   # Gating at job level rather than per step means a run that cannot be exercised
   # reports as skipped, which no one can misread as verified.
@@ -92,7 +92,7 @@ jobs:
           echo "quota remaining: $remaining, resets $resets"
           if [ "$remaining" -lt "$needed" ]; then
             echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::beliq API monthly quota is spent ($remaining of $needed documents left, resets $resets), so the live contract was NOT verified by this run."
+            echo "::warning::beliq API allowance is spent ($remaining of $needed documents left, resets $resets), so the live contract was NOT verified by this run."
           else
             echo "run=true" >> "$GITHUB_OUTPUT"
           fi

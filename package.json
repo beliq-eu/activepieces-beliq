@@ -35,7 +35,7 @@
     "dev": "tsc -p tsconfig.lib.json --watch",
     "lint": "eslint src",
     "lintfix": "eslint src --fix",
-    "test": "vitest run test/connector.test.ts",
+    "test": "vitest run --exclude test/integration.test.ts",
     "test:integration": "vitest run test/integration.test.ts",
     "scrub:check": "grep -rn $'\\u2014' src README.md examples && echo 'em-dash found' && exit 1 || echo 'no em-dash'"
   },
