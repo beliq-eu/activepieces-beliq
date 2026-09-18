@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Beliq, BeliqApiError } from '@beliq/sdk';
-import { runGenerate } from '../src/lib/actions/generate';
+import { generateAction, runGenerate } from '../src/lib/actions/generate';
 import { runValidate } from '../src/lib/actions/validate';
 import { runParse } from '../src/lib/actions/parse';
 import { runConvert } from '../src/lib/actions/convert';
@@ -8,6 +8,7 @@ import { asJsonObject, mapError, resolveAuth } from '../src/lib/common/client';
 import { resolveDocument, type FilesWriter } from '../src/lib/common/io';
 import {
   CONVERT_TARGET_OPTIONS,
+  facturxProfileOptionsFor,
   STANDARD_OPTIONS,
   VALIDATE_FORMAT_OPTIONS,
 } from '../src/lib/common/options';
@@ -239,6 +240,61 @@ describe('runGenerate', () => {
     expect(result.fileName).toBe('invoice.pdf');
     expect(result.pdfKind).toBe('facturx');
   });
+
+  // extended-ctc-fr is Factur-X only; the engine answers it on ZUGFeRD with 422
+  // PROFILE_STANDARD_MISMATCH. A flow saved before the dropdown narrowed, or
+  // one whose Standard was switched afterwards, can still carry it.
+  it('drops a Factur-X profile the chosen standard rejects', async () => {
+    const { client, calls } = clientReturning(
+      () =>
+        new Response('%PDF-1.7 hybrid', {
+          status: 200,
+          headers: { 'content-type': 'application/pdf' },
+        }),
+    );
+    const { files } = recordingFiles();
+
+    await runGenerate(
+      client,
+      {
+        standard: 'zugferd',
+        output: 'pdf',
+        facturxProfile: 'extended-ctc-fr',
+        invoice: { number: 'INV-6' },
+        verify: false,
+      },
+      files,
+    );
+
+    const sentBody = JSON.parse(bodyText(calls[0].body));
+    expect(sentBody.facturxProfile).toBeUndefined();
+  });
+
+  it('keeps extended-ctc-fr on Factur-X', async () => {
+    const { client, calls } = clientReturning(
+      () =>
+        new Response('%PDF-1.7 hybrid', {
+          status: 200,
+          headers: { 'content-type': 'application/pdf' },
+        }),
+    );
+    const { files } = recordingFiles();
+
+    await runGenerate(
+      client,
+      {
+        standard: 'facturx',
+        output: 'pdf',
+        facturxProfile: 'extended-ctc-fr',
+        invoice: { number: 'INV-7' },
+        verify: false,
+      },
+      files,
+    );
+
+    const sentBody = JSON.parse(bodyText(calls[0].body));
+    expect(sentBody.facturxProfile).toBe('extended-ctc-fr');
+  });
 });
 
 describe('runConvert', () => {
@@ -311,6 +367,33 @@ describe('option lists', () => {
     expect(VALIDATE_FORMAT_OPTIONS.map((o) => o.value)).toContain('auto');
     // A convert target can never be auto-detected.
     expect(CONVERT_TARGET_OPTIONS.map((o) => o.value)).not.toContain('auto');
+  });
+
+  it('offers each standard only the Factur-X profiles it accepts', () => {
+    const values = (standard: string) => facturxProfileOptionsFor(standard).map((o) => o.value);
+    expect(values('facturx')).toContain('extended-ctc-fr');
+    expect(values('zugferd')).toEqual(['basicwl', 'en16931', 'extended']);
+    // Outside the hybrid family there is no Factur-X profile to pick; NLCIUS
+    // resolves to Peppol BIS and pins its own.
+    expect(values('xrechnung')).toEqual([]);
+    expect(values('peppol-bis')).toEqual([]);
+    expect(values('nlcius')).toEqual([]);
+  });
+
+  // Drives the prop's own options callback, so this fails if the dropdown stops
+  // refreshing on Standard or stops reading the per-standard list.
+  it('narrows the profile dropdown when Standard changes', async () => {
+    const prop = generateAction.props.facturxProfile;
+    expect(prop.refreshers).toEqual(['standard']);
+    const ctx = {} as Parameters<typeof prop.options>[1];
+
+    const zugferd = await prop.options({ standard: 'zugferd' }, ctx);
+    expect(zugferd.disabled).toBe(false);
+    expect(zugferd.options.map((o) => o.value)).not.toContain('extended-ctc-fr');
+
+    const xrechnung = await prop.options({ standard: 'xrechnung' }, ctx);
+    expect(xrechnung.disabled).toBe(true);
+    expect(xrechnung.options).toEqual([]);
   });
 });
 

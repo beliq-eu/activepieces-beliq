@@ -6,6 +6,8 @@ import {
   LIVE_PARSE_FORMATS,
   LIVE_PROFILES,
   LIVE_VALIDATE_FORMATS,
+  isProfileAllowedForStandard,
+  profilesForStandard,
   type Standard,
 } from '@beliq/sdk';
 
@@ -60,7 +62,35 @@ export function resolveGenerateTarget(value: string): GenerateTarget {
   return { standard: value as Standard };
 }
 
+// Convert's target profile. The convert route resolves it against the Factur-X
+// URN map for both targets and does not 422 a ZUGFeRD + extended-ctc-fr pair,
+// so the per-standard narrowing below is generate's rule, not convert's.
 export const PROFILE_OPTIONS = toOptions(LIVE_PROFILES);
+
+/**
+ * The Factur-X / ZUGFeRD profiles the chosen Standard-dropdown value accepts.
+ * `profile` is pinned per standard and the engine answers a pair outside its
+ * table with 422 PROFILE_STANDARD_MISMATCH, so one flat list offered
+ * `extended-ctc-fr` for ZUGFeRD, where it can never succeed. Empty for a
+ * standard outside the hybrid family, which takes no Factur-X profile.
+ */
+export function facturxProfileOptionsFor(value: string | undefined): Option[] {
+  const { standard } = resolveGenerateTarget(value ?? '');
+  return isFacturxFamily(standard) ? toOptions(profilesForStandard(standard)) : [];
+}
+
+/**
+ * Drop a Factur-X profile the resolved standard does not accept. The dropdown
+ * narrows as the standard changes, but a flow saved before it did, or one whose
+ * standard was switched after the profile was picked, still carries the old
+ * value.
+ */
+export function usableFacturxProfile(value: string, profile: string | undefined): string | undefined {
+  if (!profile) return undefined;
+  const { standard } = resolveGenerateTarget(value);
+  return isFacturxFamily(standard) && isProfileAllowedForStandard(standard, profile) ? profile : undefined;
+}
+
 export const VALIDATE_FORMAT_OPTIONS = toOptions(LIVE_VALIDATE_FORMATS);
 export const PARSE_FORMAT_OPTIONS = toOptions(LIVE_PARSE_FORMATS);
 export const CONVERT_SOURCE_OPTIONS = toOptions(LIVE_CONVERT_SOURCE_FORMATS);
