@@ -73,7 +73,14 @@ export async function runGenerate(
     input.facturxProfile = props['facturxProfile'] as FacturxProfile;
   }
   const pdfTemplateId = ((props['pdfTemplateId'] as string) ?? '').trim();
-  if (pdfTemplateId) input.pdfTemplateId = pdfTemplateId;
+  if (pdfTemplateId) {
+    input.pdfTemplateId = pdfTemplateId;
+  } else if (input.output === 'pdf') {
+    // XRechnung and Peppol BIS have no hybrid PDF, and the API refuses PDF for
+    // them unless the request names a visual to render. Factur-X and ZUGFeRD
+    // render theirs either way, so this is inert for them.
+    input.template = 'standard';
+  }
 
   try {
     const result = await client.generate(input);
@@ -101,7 +108,8 @@ export const generateAction = createAction({
     }),
     output: Property.StaticDropdown({
       displayName: 'Output',
-      description: 'XML for a pure e-invoice, or a hybrid PDF/A-3 with the XML embedded.',
+      description:
+        'XML returns the invoice as text. PDF returns a hybrid PDF/A-3 with the XML embedded for Factur-X and ZUGFeRD. XRechnung and Peppol BIS have no hybrid form, so PDF returns a visualization of the invoice with no XML inside it; the legal document for those two is the XML.',
       required: true,
       defaultValue: 'xml',
       options: { disabled: false, options: OUTPUT_OPTIONS },
@@ -127,7 +135,8 @@ export const generateAction = createAction({
     }),
     pdfTemplateId: Property.ShortText({
       displayName: 'PDF Template ID',
-      description: 'Render the hybrid PDF from a saved dashboard template (PDF output only).',
+      description:
+        'Render the PDF visual from a saved dashboard template (PDF output only). Left empty, the built-in default visual is used.',
       required: false,
     }),
     advanced: Property.Json({
