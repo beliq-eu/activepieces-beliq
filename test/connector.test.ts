@@ -239,6 +239,99 @@ describe('runGenerate', () => {
     expect(result.fileName).toBe('invoice.pdf');
     expect(result.pdfKind).toBe('facturx');
   });
+
+  // PDF output on an XML-only standard is a hard 400 unless the request names a
+  // visual to render, and the piece exposes no other way to ask for one.
+  it('asks for the default visual on PDF output', async () => {
+    const { client, calls } = clientReturning(
+      () =>
+        new Response('%PDF-1.7 visualization', {
+          status: 200,
+          headers: { 'content-type': 'application/pdf' },
+        }),
+    );
+    const { files } = recordingFiles();
+
+    await runGenerate(
+      client,
+      { standard: 'xrechnung', output: 'pdf', invoice: { number: 'INV-3' }, verify: false },
+      files,
+    );
+
+    const sentBody = JSON.parse(bodyText(calls[0].body));
+    expect(sentBody.template).toBe('standard');
+    expect(sentBody.pdfTemplateId).toBeUndefined();
+  });
+
+  it('lets a saved template replace the default visual', async () => {
+    const { client, calls } = clientReturning(
+      () =>
+        new Response('%PDF-1.7 visualization', {
+          status: 200,
+          headers: { 'content-type': 'application/pdf' },
+        }),
+    );
+    const { files } = recordingFiles();
+
+    await runGenerate(
+      client,
+      {
+        standard: 'xrechnung',
+        output: 'pdf',
+        pdfTemplateId: ' k3d-9mp ',
+        invoice: { number: 'INV-4' },
+        verify: false,
+      },
+      files,
+    );
+
+    const sentBody = JSON.parse(bodyText(calls[0].body));
+    expect(sentBody.pdfTemplateId).toBe('k3d-9mp');
+    expect(sentBody.template).toBeUndefined();
+  });
+
+  it('asks for no visual on XML output', async () => {
+    const { client, calls } = clientReturning(
+      () =>
+        new Response('<Invoice/>', {
+          status: 200,
+          headers: { 'content-type': 'application/xml' },
+        }),
+    );
+    const { files } = recordingFiles();
+
+    await runGenerate(
+      client,
+      { standard: 'xrechnung', output: 'xml', invoice: { number: 'INV-5' }, verify: false },
+      files,
+    );
+
+    const sentBody = JSON.parse(bodyText(calls[0].body));
+    expect(sentBody.template).toBeUndefined();
+  });
+
+  // The preset resolves output to xml, so the visual must not be requested on
+  // the back of the caller's pdf choice.
+  it('asks for no visual when a preset forces XML output', async () => {
+    const { client, calls } = clientReturning(
+      () =>
+        new Response('<Invoice/>', {
+          status: 200,
+          headers: { 'content-type': 'application/xml' },
+        }),
+    );
+    const { files } = recordingFiles();
+
+    await runGenerate(
+      client,
+      { standard: 'nlcius', output: 'pdf', invoice: { number: 'NL-2' }, verify: false },
+      files,
+    );
+
+    const sentBody = JSON.parse(bodyText(calls[0].body));
+    expect(sentBody.output).toBe('xml');
+    expect(sentBody.template).toBeUndefined();
+  });
 });
 
 describe('runConvert', () => {
