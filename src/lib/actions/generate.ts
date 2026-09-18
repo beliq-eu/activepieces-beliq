@@ -4,11 +4,11 @@ import { beliqAuth } from '../common/auth';
 import { asJsonObject, createClient, mapError } from '../common/client';
 import { type FilesWriter, writeDocument } from '../common/io';
 import {
-  isFacturxFamily,
+  facturxProfileOptionsFor,
   OUTPUT_OPTIONS,
-  PROFILE_OPTIONS,
   resolveGenerateTarget,
   STANDARD_OPTIONS,
+  usableFacturxProfile,
 } from '../common/options';
 
 // The default the Activepieces form shows, and the fixture the live test
@@ -67,10 +67,14 @@ export async function runGenerate(
     verify: props['verify'] === true,
     advanced: asJsonObject(props['advanced']),
   };
+  const facturxProfile = usableFacturxProfile(
+    props['standard'] as string,
+    props['facturxProfile'] as string | undefined,
+  );
   if (target.profile) {
     input.profile = target.profile as GenerateInput['profile'];
-  } else if (isFacturxFamily(target.standard) && props['facturxProfile']) {
-    input.facturxProfile = props['facturxProfile'] as FacturxProfile;
+  } else if (facturxProfile) {
+    input.facturxProfile = facturxProfile as FacturxProfile;
   }
   const pdfTemplateId = ((props['pdfTemplateId'] as string) ?? '').trim();
   if (pdfTemplateId) {
@@ -114,12 +118,20 @@ export const generateAction = createAction({
       defaultValue: 'xml',
       options: { disabled: false, options: OUTPUT_OPTIONS },
     }),
-    facturxProfile: Property.StaticDropdown({
+    facturxProfile: Property.Dropdown({
+      auth: undefined,
       displayName: 'Factur-X / ZUGFeRD Profile',
-      description: 'Applied only when Standard is Factur-X or ZUGFeRD.',
+      description:
+        'Applied only when Standard is Factur-X or ZUGFeRD. The choices follow the Standard: EXTENDED CTC FR is Factur-X only.',
       required: false,
       defaultValue: 'en16931',
-      options: { disabled: false, options: PROFILE_OPTIONS },
+      refreshers: ['standard'],
+      options: async ({ standard }) => {
+        const options = facturxProfileOptionsFor(standard as string | undefined);
+        return options.length > 0
+          ? { disabled: false, options }
+          : { disabled: true, options: [], placeholder: 'Only used for Factur-X and ZUGFeRD' };
+      },
     }),
     invoice: Property.Json({
       displayName: 'Invoice (JSON)',
