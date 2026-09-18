@@ -37,7 +37,7 @@
     "lintfix": "eslint src --fix",
     "test": "vitest run --exclude test/integration.test.ts",
     "test:integration": "vitest run test/integration.test.ts",
-    "scrub:check": "grep -rn $'\\u2014' src README.md examples && echo 'em-dash found' && exit 1 || echo 'no em-dash'"
+    "scrub:check": "bash scripts/scrub-check.sh"
   },
   "dependencies": {
     "@activepieces/pieces-common": "0.12.5",
