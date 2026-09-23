@@ -9,6 +9,7 @@ import { resolveDocument, type FilesWriter } from '../src/lib/common/io';
 import {
   CONVERT_TARGET_OPTIONS,
   facturxProfileOptionsFor,
+  resolveGenerateTarget,
   STANDARD_OPTIONS,
   VALIDATE_FORMAT_OPTIONS,
 } from '../src/lib/common/options';
@@ -487,6 +488,18 @@ describe('option lists', () => {
     const xrechnung = await prop.options({ standard: 'xrechnung' }, ctx);
     expect(xrechnung.disabled).toBe(true);
     expect(xrechnung.options).toEqual([]);
+  });
+
+  // A preset that forces its output wins over the Output field, so that field
+  // has to say so, or the user's choice is dropped without a word.
+  it('names every standard that overrides Output in the Output description', () => {
+    const { standard, output } = generateAction.props;
+    const forcing = standard.options.options.flatMap((o) => {
+      const forced = resolveGenerateTarget(o.value).output;
+      return forced ? [`${o.label} always returns ${forced.toUpperCase()}`] : [];
+    });
+    expect(forcing).toEqual(['NLCIUS always returns XML']);
+    for (const sentence of forcing) expect(output.description).toContain(sentence);
   });
 });
 
