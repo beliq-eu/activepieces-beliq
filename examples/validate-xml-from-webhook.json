@@ -29,7 +29,7 @@
         "displayName": "Validate Invoice",
         "settings": {
           "pieceName": "activepieces-beliq",
-          "pieceVersion": "~0.1.0",
+          "pieceVersion": "~0.2.0",
           "pieceType": "CUSTOM",
           "packageType": "REGISTRY",
           "actionName": "validate_invoice",
