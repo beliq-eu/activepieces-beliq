@@ -1,0 +1,94 @@
+name: Live standards
+
+# Row R04 (beliq-hq CONNECTORS-ROADMAP.md, item 8): the per-merge live smoke in
+# ci.yml generates XRechnung only. This generates every Standard the Generate
+# action offers from the form's default invoice, once a week. It also runs on a
+# pull request that changes the suite or this file, so a change to it is proven
+# before it merges.
+on:
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - test/standards.test.ts
+      - .github/workflows/standards.yml
+
+concurrency:
+  group: standards-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      # GET /v1/me is quota-exempt, so asking what is left costs nothing. A key
+      # that is absent (forks) and a quota that is spent are the same condition
+      # from the test's point of view: the contract could not be checked, which is
+      # not the same as the contract being broken.
+      - id: decide
+        env:
+          BELIQ_API_KEY: ${{ secrets.BELIQ_API_KEY }}
+        run: |
+          set -uo pipefail
+
+          # one generate per Standard in the dropdown
+          needed=5
+
+          if [ -z "${BELIQ_API_KEY:-}" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "BELIQ_API_KEY is not set; skipping the live API smoke test."
+            exit 0
+          fi
+
+          body="$(curl -sS --max-time 30 \
+            -H "Authorization: Bearer $BELIQ_API_KEY" \
+            https://api.beliq.eu/v1/me)" || body=''
+          remaining="$(printf '%s' "$body" | jq -r '.data.quota.remaining // empty')" || remaining=''
+          resets="$(printf '%s' "$body" | jq -r '.data.quota.resetsAt // empty')" || resets='unknown'
+
+          # An unreadable answer is not a reason to skip: /v1/me is an
+          # optimisation, and a real API outage should surface as a red live job
+          # rather than a quiet one.
+          if ! printf '%s' "$remaining" | grep -qE '^[0-9]+$'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "could not read the remaining quota from /v1/me; running the live test anyway"
+            exit 0
+          fi
+
+          echo "quota remaining: $remaining, resets $resets"
+          if [ "$remaining" -lt "$needed" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::beliq API allowance is spent ($remaining of $needed documents left, resets $resets), so the live contract was NOT verified by this run."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  standards:
+    needs: preflight
+    if: needs.preflight.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate every Standard
+        env:
+          BELIQ_API_KEY: ${{ secrets.BELIQ_API_KEY }}
+        run: npm run test:standards
