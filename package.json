@@ -1,6 +1,6 @@
 {
   "name": "activepieces-beliq",
-  "version": "0.2.3",
+  "version": "0.2.5",
   "description": "beliq connector for Activepieces: generate, validate, parse, and convert EU-compliant e-invoices (XRechnung, ZUGFeRD, Factur-X, Peppol BIS).",
   "keywords": [
     "activepieces",
@@ -35,12 +35,12 @@
     "dev": "tsc -p tsconfig.lib.json --watch",
     "lint": "eslint src",
     "lintfix": "eslint src --fix",
-    "test": "vitest run --exclude test/integration.test.ts",
+    "test": "vitest run --exclude test/integration.test.ts --exclude test/standards.test.ts",
     "test:integration": "vitest run test/integration.test.ts",
+    "test:standards": "vitest run test/standards.test.ts",
     "scrub:check": "bash scripts/scrub-check.sh"
   },
   "dependencies": {
-    "@activepieces/pieces-common": "0.12.5",
     "@activepieces/pieces-framework": "0.32.0",
     "@activepieces/shared": "0.96.2",
     "@beliq/sdk": "^0.4.0",

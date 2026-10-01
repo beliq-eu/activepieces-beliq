@@ -67,11 +67,10 @@ export async function writeDocument(
   files: FilesWriter,
   result: DocumentResult,
   kind: 'invoice' | 'converted',
-  filenameOverride?: string,
 ): Promise<Record<string, unknown>> {
   const contentType = result.contentType.split(';')[0].trim();
   const ext = contentType.includes('pdf') ? 'pdf' : 'xml';
-  const fileName = filenameOverride || `${kind}.${ext}`;
+  const fileName = `${kind}.${ext}`;
   const file = await files.write({ fileName, data: Buffer.from(result.bytes) });
   const meta = Object.fromEntries(
     Object.entries(result.meta as Record<string, unknown>).filter(
