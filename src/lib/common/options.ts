@@ -13,7 +13,7 @@ import {
 
 // Dropdown value-spaces are sourced straight from the SDK's LIVE_* lists, which
 // are the publicly-offered subset of the beliq coverage SSOT. Provisional
-// formats the API can technically accept stay out of the UI (LPD-1); reach them
+// formats the API can technically accept stay out of the UI; reach them
 // through the Advanced (JSON) field. Labels here are cosmetic only.
 const LABELS: Record<string, string> = {
   auto: 'Auto-detect',
