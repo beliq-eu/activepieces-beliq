@@ -1,7 +1,7 @@
 name: Live standards
 
-# Row R04 (beliq-hq CONNECTORS-ROADMAP.md, item 8): the per-merge live smoke in
-# ci.yml generates XRechnung only. This generates every Standard the Generate
+# The per-merge live smoke in ci.yml generates XRechnung only. This generates
+# every Standard the Generate
 # action offers from the form's default invoice, once a week. It also runs on a
 # pull request that changes the suite or this file, so a change to it is proven
 # before it merges.
