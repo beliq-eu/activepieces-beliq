@@ -3,8 +3,7 @@ name: Release
 # Publishes to npm via Trusted Publishing (OIDC), no NPM_TOKEN needed.
 # Provenance attestations are generated automatically. Trigger by pushing a
 # version tag (e.g. v0.1.1) or running the workflow manually. Requires the npm
-# Trusted Publisher to be configured for this package first (see the roadmap in
-# beliq-hq/CONNECTORS-ROADMAP.md).
+# Trusted Publisher to be configured for this package first.
 on:
   push:
     tags:
