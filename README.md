@@ -44,7 +44,8 @@ Importable flow templates live in [`examples/`](./examples), one per use case. I
 ```bash
 npm install
 npm run build       # tsc -> dist/ + prepare-dist (publishable package layout)
-npm run lint        # eslint
+npm run typecheck   # src as built (CommonJS), and the tests as vitest runs them (ESM)
+npm run lint        # ESLint with type information, whole repository
 npm test            # unit tests (connector mapping, output shaping, error handling)
 npm run scrub:check # fail on em-dashes in UI/customer text
 ```
