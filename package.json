@@ -44,7 +44,7 @@
   "dependencies": {
     "@activepieces/pieces-framework": "0.32.0",
     "@activepieces/shared": "0.96.2",
-    "@beliq/sdk": "^0.4.0",
+    "@beliq/sdk": "^0.5.0",
     "tslib": "^2.6.2"
   },
   "devDependencies": {
