@@ -265,6 +265,34 @@ describe('runGenerate', () => {
     expect(sentBody.pdfTemplateId).toBeUndefined();
   });
 
+  // The national standards are XML-only too, and a Factur-X profile left over
+  // from an earlier pick must not reach a standard that takes none.
+  it.for(['fatturapa', 'facturae', 'eslog', 'ksef'])(
+    'sends %s as itself, with the default visual and no Factur-X profile',
+    async (standard) => {
+      const { client, calls } = clientReturning(
+        () =>
+          new Response('%PDF-1.7 visualization', {
+            status: 200,
+            headers: { 'content-type': 'application/pdf' },
+          }),
+      );
+      const { files } = recordingFiles();
+
+      await runGenerate(
+        client,
+        { standard, output: 'pdf', facturxProfile: 'en16931', invoice: { number: 'INV-5' }, verify: false },
+        files,
+      );
+
+      const sentBody = JSON.parse(bodyText(calls[0].body));
+      expect(sentBody.standard).toBe(standard);
+      expect(sentBody.template).toBe('standard');
+      expect(sentBody.facturxProfile).toBeUndefined();
+      expect(sentBody.profile).toBeUndefined();
+    },
+  );
+
   it('lets a saved template replace the default visual', async () => {
     const { client, calls } = clientReturning(
       () =>
@@ -456,11 +484,21 @@ describe('option lists', () => {
       'zugferd',
       'facturx',
       'peppol-bis',
+      'fatturapa',
+      'facturae',
+      'eslog',
+      'ksef',
       'nlcius',
     ]);
     expect(VALIDATE_FORMAT_OPTIONS.map((o) => o.value)).toContain('auto');
     // A convert target can never be auto-detected.
     expect(CONVERT_TARGET_OPTIONS.map((o) => o.value)).not.toContain('auto');
+  });
+
+  // A value with no label shows in the dropdown as its raw id. The SDK decides
+  // which standards are offered, so a new one arrives here without a label.
+  it('gives every generate target a label of its own', () => {
+    expect(STANDARD_OPTIONS.filter((o) => o.label === o.value)).toEqual([]);
   });
 
   it('offers each standard only the Factur-X profiles it accepts', () => {

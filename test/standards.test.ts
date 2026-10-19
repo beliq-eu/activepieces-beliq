@@ -17,6 +17,13 @@ const BASE_URL = process.env['BELIQ_BASE_URL'];
 // the others have no hybrid form and are generated as the XML they are.
 const HYBRID_PDF = new Set(['facturx', 'zugferd']);
 
+// The default invoice is German, and each national standard needs parties and
+// fields of its own country (KSeF FA(3) refuses any currency but PLN), so this
+// suite cannot verify them from it. They stay out of the generate loop until
+// each has a fixture of its own; the target list below still names them, so a
+// change to the dropdown fails here first.
+const NEEDS_OWN_FIXTURE = new Set(['fatturapa', 'facturae', 'eslog', 'ksef']);
+
 const memoryFiles = (): FilesWriter => ({
   async write({ fileName }) {
     return `memory://${fileName}`;
@@ -28,14 +35,22 @@ const memoryFiles = (): FilesWriter => ({
 const isQuotaExhausted = (err: unknown): boolean =>
   err instanceof Error && err.message.endsWith('(QUOTA_EXCEEDED)');
 
-describe.skipIf(!API_KEY)('every Standard in the Generate dropdown', () => {
-  it('offers the five targets this suite was written for', () => {
-    expect(STANDARD_OPTIONS.map((o) => o.value).sort()).toEqual(
-      ['facturx', 'nlcius', 'peppol-bis', 'xrechnung', 'zugferd'],
-    );
+describe.skipIf(!API_KEY)('every Standard in the Generate dropdown that the default invoice fits', () => {
+  it('offers the nine targets this suite was written for', () => {
+    expect(STANDARD_OPTIONS.map((o) => o.value).sort()).toEqual([
+      'eslog',
+      'facturae',
+      'facturx',
+      'fatturapa',
+      'ksef',
+      'nlcius',
+      'peppol-bis',
+      'xrechnung',
+      'zugferd',
+    ]);
   });
 
-  it.for(STANDARD_OPTIONS.map((o) => String(o.value)))(
+  it.for(STANDARD_OPTIONS.map((o) => String(o.value)).filter((s) => !NEEDS_OWN_FIXTURE.has(s)))(
     'generates %s from the default invoice and passes verification',
     async (standard, ctx) => {
       const output = HYBRID_PDF.has(standard) ? 'pdf' : 'xml';

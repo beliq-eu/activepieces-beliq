@@ -1,10 +1,10 @@
 # activepieces-beliq
 
-An [Activepieces](https://www.activepieces.com) community piece for [beliq](https://beliq.eu), a REST API that generates, validates, parses, and converts EU-compliant e-invoices (XRechnung, ZUGFeRD, Factur-X, Peppol BIS) against authority-pinned, drift-checked rules.
+An [Activepieces](https://www.activepieces.com) community piece for [beliq](https://beliq.eu), a REST API that generates, validates, parses, and converts EU-compliant e-invoices (XRechnung, ZUGFeRD, Factur-X, Peppol BIS) against authority-pinned, drift-checked rules. It also generates FatturaPA, Facturae, e-SLOG and KSeF FA(3), which are Schema-checked: see [Format coverage](#format-coverage).
 
 One piece, four actions:
 
-- **Generate Invoice** - build a compliant document (XML or hybrid PDF/A-3) from an EN 16931 invoice object.
+- **Generate Invoice** - build a compliant document (XML or PDF) from an EN 16931 invoice object.
 - **Validate Invoice** - check an XML or PDF invoice against the authority-pinned rules and get a structured verdict.
 - **Parse Invoice** - extract a structured EN 16931 invoice object from an XML or PDF document.
 - **Convert Invoice** - convert a document from one EN 16931 format to another.
@@ -29,7 +29,24 @@ Create a **beliq** connection with an API key from [dashboard.beliq.eu](https://
 
 ## Anything not in the UI?
 
-Every action has an **Advanced (JSON)** field that is deep-merged into the request (the body for Generate, the query for Validate / Parse / Convert), so any API option not surfaced as a control is still reachable. The format dropdowns list the formats beliq offers publicly today; see the full request and response schema at [docs.beliq.eu](https://docs.beliq.eu).
+Every action has an **Advanced (JSON)** field that is deep-merged into the request (the body for Generate, the query for Validate / Parse / Convert), so any API option not surfaced as a control is still reachable. [Format coverage](#format-coverage) says which formats each dropdown carries; see the full request and response schema at [docs.beliq.eu](https://docs.beliq.eu).
+
+## Format coverage
+
+The Standard dropdown of **Generate Invoice** carries every standard `POST /v1/generate` accepts, plus the NLCIUS profile of Peppol BIS. `GET https://api.beliq.eu/v1/rulesets` publishes each format with a badge saying how deep its check goes:
+
+- **Authority-checked** (the authority's own rules): XRechnung, ZUGFeRD, Factur-X, Peppol BIS and NLCIUS.
+- **Schema-checked** (structure only, no business rules): FatturaPA, Facturae, e-SLOG and KSeF FA(3). Their authority publishes no machine-readable business rules.
+
+A national standard reads fields of its own from the **Invoice (JSON)** object. The [generate reference](https://docs.beliq.eu/api-reference/generate/) lists them, and the [format reference](https://docs.beliq.eu/format-reference/overview/) has a page per country.
+
+KSeF FA(3) generation covers ordinary VAT invoices in PLN between Polish parties, at VAT rates 23, 22, 8, 7 and 5. The [Poland KSeF FA(3) reference](https://docs.beliq.eu/format-reference/poland/) states the full scope.
+
+beliq generates and validates the document. Transmission (Peppol, PA, KSeF, SDI), archiving, and tax-authority reporting are separate and remain your access point's job: beliq does not operate KSeF submission, and no action of this piece sends or files an invoice.
+
+Only ZUGFeRD and Factur-X have a hybrid PDF, a PDF/A-3 with the XML embedded. For the other standards, PDF output is a visualization with no XML inside it, and the legal document is the XML. NLCIUS always returns XML.
+
+The **Convert Invoice** dropdowns are shorter than the Generate one because the API's own convert enums are: no national format is a conversion source or target.
 
 ## Example flows
 
