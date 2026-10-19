@@ -80,9 +80,9 @@ export async function runGenerate(
   if (pdfTemplateId) {
     input.pdfTemplateId = pdfTemplateId;
   } else if (input.output === 'pdf') {
-    // XRechnung and Peppol BIS have no hybrid PDF, and the API refuses PDF for
-    // them unless the request names a visual to render. Factur-X and ZUGFeRD
-    // render theirs either way, so this is inert for them.
+    // Only Factur-X and ZUGFeRD have a hybrid PDF. The API refuses PDF for
+    // every other standard unless the request names a visual to render.
+    // Factur-X and ZUGFeRD render theirs either way, so this is inert for them.
     input.template = 'standard';
   }
 
@@ -101,11 +101,12 @@ export const generateAction = createAction({
   name: 'generate_invoice',
   displayName: 'Generate Invoice',
   description:
-    'Build a compliant e-invoice document (XML or hybrid PDF/A-3) from an EN 16931 invoice object.',
+    'Build a compliant e-invoice document (XML or PDF) from an EN 16931 invoice object.',
   props: {
     standard: Property.StaticDropdown({
       displayName: 'Standard',
-      description: 'The e-invoice standard to generate.',
+      description:
+        'The e-invoice standard to generate. FatturaPA, Facturae, e-SLOG and KSeF FA(3) are Schema-checked: structure only, no business rules. KSeF FA(3) covers ordinary VAT invoices in PLN between Polish parties, at VAT rates 23, 22, 8, 7 and 5; docs.beliq.eu/format-reference/poland states the full scope. beliq does not operate KSeF submission.',
       required: true,
       defaultValue: 'xrechnung',
       options: { disabled: false, options: STANDARD_OPTIONS },
@@ -113,7 +114,7 @@ export const generateAction = createAction({
     output: Property.StaticDropdown({
       displayName: 'Output',
       description:
-        'XML returns the invoice as text. PDF returns a hybrid PDF/A-3 with the XML embedded for Factur-X and ZUGFeRD. XRechnung and Peppol BIS have no hybrid form, so PDF returns a visualization of the invoice with no XML inside it; the legal document for those two is the XML. NLCIUS always returns XML, whatever this field says.',
+        'XML returns the invoice as text. PDF returns a hybrid PDF/A-3 with the XML embedded for Factur-X and ZUGFeRD. No other standard has a hybrid form, so PDF returns a visualization of the invoice with no XML inside it, and the legal document stays the XML. NLCIUS always returns XML, whatever this field says.',
       required: true,
       defaultValue: 'xml',
       options: { disabled: false, options: OUTPUT_OPTIONS },

@@ -456,11 +456,28 @@ describe('option lists', () => {
       'zugferd',
       'facturx',
       'peppol-bis',
+      'fatturapa',
+      'facturae',
+      'eslog',
+      'ksef',
       'nlcius',
     ]);
     expect(VALIDATE_FORMAT_OPTIONS.map((o) => o.value)).toContain('auto');
     // A convert target can never be auto-detected.
     expect(CONVERT_TARGET_OPTIONS.map((o) => o.value)).not.toContain('auto');
+  });
+
+  // A value with no label shows in the dropdown as its raw id. The SDK decides
+  // which standards are offered, so a new one arrives here without a label.
+  it('gives every generate target a label of its own', () => {
+    expect(STANDARD_OPTIONS.filter((o) => o.label === o.value)).toEqual([]);
+  });
+
+  it('resolves each national standard to itself, with no Factur-X profile to pick', () => {
+    for (const standard of ['fatturapa', 'facturae', 'eslog', 'ksef']) {
+      expect(resolveGenerateTarget(standard)).toEqual({ standard });
+      expect(facturxProfileOptionsFor(standard)).toEqual([]);
+    }
   });
 
   it('offers each standard only the Factur-X profiles it accepts', () => {
