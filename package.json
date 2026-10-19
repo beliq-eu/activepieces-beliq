@@ -1,7 +1,7 @@
 {
   "name": "activepieces-beliq",
   "version": "0.2.5",
-  "description": "beliq connector for Activepieces: generate, validate, parse, and convert EU-compliant e-invoices (XRechnung, ZUGFeRD, Factur-X, Peppol BIS).",
+  "description": "beliq connector for Activepieces: generate, validate, parse, and convert EU-compliant e-invoices (XRechnung, ZUGFeRD, Factur-X, Peppol BIS), and generate FatturaPA, Facturae, e-SLOG and KSeF FA(3).",
   "keywords": [
     "activepieces",
     "activepieces-piece",

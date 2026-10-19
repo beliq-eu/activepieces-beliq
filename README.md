@@ -1,6 +1,6 @@
 # activepieces-beliq
 
-An [Activepieces](https://www.activepieces.com) community piece for [beliq](https://beliq.eu), a REST API that generates, validates, parses, and converts EU-compliant e-invoices (XRechnung, ZUGFeRD, Factur-X, Peppol BIS) against authority-pinned, drift-checked rules.
+An [Activepieces](https://www.activepieces.com) community piece for [beliq](https://beliq.eu), a REST API that generates, validates, parses, and converts EU-compliant e-invoices (XRechnung, ZUGFeRD, Factur-X, Peppol BIS) against authority-pinned, drift-checked rules. It also generates FatturaPA, Facturae, e-SLOG and KSeF FA(3), which are Schema-checked: see [Format coverage](#format-coverage).
 
 One piece, four actions:
 
@@ -29,7 +29,7 @@ Create a **beliq** connection with an API key from [dashboard.beliq.eu](https://
 
 ## Anything not in the UI?
 
-Every action has an **Advanced (JSON)** field that is deep-merged into the request (the body for Generate, the query for Validate / Parse / Convert), so any API option not surfaced as a control is still reachable. The format dropdowns list the formats beliq offers publicly today; see the full request and response schema at [docs.beliq.eu](https://docs.beliq.eu).
+Every action has an **Advanced (JSON)** field that is deep-merged into the request (the body for Generate, the query for Validate / Parse / Convert), so any API option not surfaced as a control is still reachable. [Format coverage](#format-coverage) says which formats each dropdown carries; see the full request and response schema at [docs.beliq.eu](https://docs.beliq.eu).
 
 ## Format coverage
 
@@ -42,7 +42,7 @@ A national standard reads fields of its own from the **Invoice (JSON)** object. 
 
 KSeF FA(3) generation covers ordinary VAT invoices in PLN between Polish parties, at VAT rates 23, 22, 8, 7 and 5. The [Poland KSeF FA(3) reference](https://docs.beliq.eu/format-reference/poland/) states the full scope.
 
-beliq generates and validates the document. Transmission (Peppol, PDP, KSeF, SDI), archiving, and tax-authority reporting are separate and remain your access point's job: beliq does not operate KSeF submission, and no action of this piece sends or files an invoice.
+beliq generates and validates the document. Transmission (Peppol, PA, KSeF, SDI), archiving, and tax-authority reporting are separate and remain your access point's job: beliq does not operate KSeF submission, and no action of this piece sends or files an invoice.
 
 Only ZUGFeRD and Factur-X have a hybrid PDF, a PDF/A-3 with the XML embedded. For the other standards, PDF output is a visualization with no XML inside it, and the legal document is the XML. NLCIUS always returns XML.
 

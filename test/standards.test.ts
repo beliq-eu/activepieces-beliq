@@ -35,7 +35,7 @@ const memoryFiles = (): FilesWriter => ({
 const isQuotaExhausted = (err: unknown): boolean =>
   err instanceof Error && err.message.endsWith('(QUOTA_EXCEEDED)');
 
-describe.skipIf(!API_KEY)('every Standard in the Generate dropdown', () => {
+describe.skipIf(!API_KEY)('every Standard in the Generate dropdown that the default invoice fits', () => {
   it('offers the nine targets this suite was written for', () => {
     expect(STANDARD_OPTIONS.map((o) => o.value).sort()).toEqual([
       'eslog',
