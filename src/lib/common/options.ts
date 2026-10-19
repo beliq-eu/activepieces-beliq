@@ -14,7 +14,11 @@ import {
 // Dropdown value-spaces are sourced straight from the SDK's LIVE_* lists.
 // Generate offers all eight standards POST /v1/generate accepts, the four
 // national XSD ones included; convert offers fewer because the API's own
-// convert enums do. GET /v1/rulesets carries the badge saying how deep each
+// convert enums do. Validate and parse offer the SDK's auto, cii and ubl,
+// which is narrower than the API's own `format` enums: those also carry
+// fatturapa, sdi_messaggio, facturae, eslog and poland_ksef_fa3. The SDK
+// states no reason for the gap; the Advanced (JSON) field reaches those
+// values as `format`. GET /v1/rulesets carries the badge saying how deep each
 // format's check goes. Labels here are cosmetic only.
 const LABELS: Record<string, string> = {
   auto: 'Auto-detect',

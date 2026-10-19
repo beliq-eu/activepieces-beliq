@@ -136,7 +136,8 @@ export const generateAction = createAction({
     }),
     invoice: Property.Json({
       displayName: 'Invoice (JSON)',
-      description: 'The invoice object in beliq EN 16931 shape. See docs.beliq.eu.',
+      description:
+        'The invoice object in beliq EN 16931 shape. See docs.beliq.eu. The default is an XRechnung between two German companies; FatturaPA, Facturae, e-SLOG and KSeF FA(3) need parties and fields of their own country, which docs.beliq.eu/api-reference/generate lists.',
       required: true,
       defaultValue: SAMPLE_INVOICE,
     }),
