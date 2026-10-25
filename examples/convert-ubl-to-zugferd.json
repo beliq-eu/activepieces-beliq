@@ -1,6 +1,6 @@
 {
   "name": "Convert UBL to ZUGFeRD from a webhook",
-  "description": "Receive a UBL invoice on a webhook and convert it to a ZUGFeRD (EN 16931) hybrid PDF with beliq.",
+  "description": "Receive a UBL invoice on a webhook and convert it to ZUGFeRD (EN 16931) CII XML with beliq. An XML source comes back as XML, not as a hybrid PDF.",
   "tags": ["e-invoice", "convert", "zugferd", "ubl", "beliq"],
   "pieces": ["@activepieces/piece-webhook", "activepieces-beliq"],
   "blogUrl": "",

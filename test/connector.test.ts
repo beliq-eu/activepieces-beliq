@@ -1,9 +1,11 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { Beliq, BeliqApiError } from '@beliq/sdk';
+import { CONVERT_PDF_LINE } from '@beliq/sdk/helpers';
 import { generateAction, runGenerate } from '../src/lib/actions/generate';
 import { runValidate } from '../src/lib/actions/validate';
 import { runParse } from '../src/lib/actions/parse';
-import { runConvert } from '../src/lib/actions/convert';
+import { convertAction, runConvert } from '../src/lib/actions/convert';
 import { asJsonObject, mapError, resolveAuth } from '../src/lib/common/client';
 import { resolveDocument, type FilesWriter } from '../src/lib/common/io';
 import {
@@ -53,6 +55,35 @@ function errorResponse(code: string, message: string, status = 400): Response {
   return new Response(JSON.stringify({ success: false, error: { code, message } }), {
     status,
     headers: { 'content-type': 'application/json' },
+  });
+}
+
+// An answer of the live API to POST /v1/generate in its JSON envelope
+// (Accept: application/json), recorded with a test key from the SAMPLE_INVOICE
+// as XRechnung XML with verify on, and stored as it came: status, the response
+// headers the SDK reads, and the body.
+interface RecordedAnswer {
+  status: number;
+  headers: Record<string, string>;
+  body: { success: boolean; data: { output: string; validationResult: Record<string, unknown> } };
+}
+const recordedGenerate = (): RecordedAnswer =>
+  JSON.parse(
+    readFileSync(new URL('./fixtures/live-generate-xrechnung-envelope.json', import.meta.url), 'utf8'),
+  ) as RecordedAnswer;
+
+function replay(answer: RecordedAnswer): Response {
+  return new Response(JSON.stringify(answer.body), { status: answer.status, headers: answer.headers });
+}
+
+// Generate always asks for the envelope, so every generate answer here is one:
+// the document base64-encoded in `data.output`, with headers as the API sets
+// them for either shape.
+function envelopeResponse(document: string, contentType: string, headers: Record<string, string> = {}): Response {
+  const data = { output: Buffer.from(document, 'utf8').toString('base64'), contentType };
+  return new Response(JSON.stringify({ success: true, data }), {
+    status: 200,
+    headers: { ...headers, 'content-type': 'application/json' },
   });
 }
 
@@ -155,10 +186,7 @@ describe('runGenerate', () => {
   it('posts the invoice JSON, writes the XML to a file, and returns metadata', async () => {
     const { client, calls } = clientReturning(
       () =>
-        new Response('<Invoice>generated</Invoice>', {
-          status: 200,
-          headers: { 'content-type': 'application/xml', 'x-schematron-version': '1.2.3' },
-        }),
+        envelopeResponse('<Invoice>generated</Invoice>', 'application/xml', { 'x-schematron-version': '1.2.3' }),
     );
     const { files, writes } = recordingFiles();
 
@@ -194,10 +222,7 @@ describe('runGenerate', () => {
   it('resolves the NLCIUS target to peppol-bis + the netherlands-nlcius profile', async () => {
     const { client, calls } = clientReturning(
       () =>
-        new Response('<Invoice/>', {
-          status: 200,
-          headers: { 'content-type': 'application/xml' },
-        }),
+        envelopeResponse('<Invoice/>', 'application/xml'),
     );
     const { files } = recordingFiles();
 
@@ -217,10 +242,7 @@ describe('runGenerate', () => {
   it('includes the Factur-X profile only for the hybrid family', async () => {
     const { client, calls } = clientReturning(
       () =>
-        new Response('%PDF-1.7 hybrid', {
-          status: 200,
-          headers: { 'content-type': 'application/pdf', 'x-pdf-kind': 'facturx' },
-        }),
+        envelopeResponse('%PDF-1.7 hybrid', 'application/pdf', { 'x-pdf-kind': 'facturx' }),
     );
     const { files } = recordingFiles();
 
@@ -247,10 +269,7 @@ describe('runGenerate', () => {
   it('asks for the default visual on PDF output', async () => {
     const { client, calls } = clientReturning(
       () =>
-        new Response('%PDF-1.7 visualization', {
-          status: 200,
-          headers: { 'content-type': 'application/pdf' },
-        }),
+        envelopeResponse('%PDF-1.7 visualization', 'application/pdf'),
     );
     const { files } = recordingFiles();
 
@@ -272,10 +291,7 @@ describe('runGenerate', () => {
     async (standard) => {
       const { client, calls } = clientReturning(
         () =>
-          new Response('%PDF-1.7 visualization', {
-            status: 200,
-            headers: { 'content-type': 'application/pdf' },
-          }),
+          envelopeResponse('%PDF-1.7 visualization', 'application/pdf'),
       );
       const { files } = recordingFiles();
 
@@ -296,10 +312,7 @@ describe('runGenerate', () => {
   it('lets a saved template replace the default visual', async () => {
     const { client, calls } = clientReturning(
       () =>
-        new Response('%PDF-1.7 visualization', {
-          status: 200,
-          headers: { 'content-type': 'application/pdf' },
-        }),
+        envelopeResponse('%PDF-1.7 visualization', 'application/pdf'),
     );
     const { files } = recordingFiles();
 
@@ -323,10 +336,7 @@ describe('runGenerate', () => {
   it('asks for no visual on XML output', async () => {
     const { client, calls } = clientReturning(
       () =>
-        new Response('<Invoice/>', {
-          status: 200,
-          headers: { 'content-type': 'application/xml' },
-        }),
+        envelopeResponse('<Invoice/>', 'application/xml'),
     );
     const { files } = recordingFiles();
 
@@ -345,10 +355,7 @@ describe('runGenerate', () => {
   it('asks for no visual when a preset forces XML output', async () => {
     const { client, calls } = clientReturning(
       () =>
-        new Response('<Invoice/>', {
-          status: 200,
-          headers: { 'content-type': 'application/xml' },
-        }),
+        envelopeResponse('<Invoice/>', 'application/xml'),
     );
     const { files } = recordingFiles();
 
@@ -369,10 +376,7 @@ describe('runGenerate', () => {
   it('drops a Factur-X profile the chosen standard rejects', async () => {
     const { client, calls } = clientReturning(
       () =>
-        new Response('%PDF-1.7 hybrid', {
-          status: 200,
-          headers: { 'content-type': 'application/pdf' },
-        }),
+        envelopeResponse('%PDF-1.7 hybrid', 'application/pdf'),
     );
     const { files } = recordingFiles();
 
@@ -395,10 +399,7 @@ describe('runGenerate', () => {
   it('keeps extended-ctc-fr on Factur-X', async () => {
     const { client, calls } = clientReturning(
       () =>
-        new Response('%PDF-1.7 hybrid', {
-          status: 200,
-          headers: { 'content-type': 'application/pdf' },
-        }),
+        envelopeResponse('%PDF-1.7 hybrid', 'application/pdf'),
     );
     const { files } = recordingFiles();
 
@@ -416,6 +417,75 @@ describe('runGenerate', () => {
 
     const sentBody = JSON.parse(bodyText(calls[0].body));
     expect(sentBody.facturxProfile).toBe('extended-ctc-fr');
+  });
+});
+
+describe('the verdict Generate and Validate hand on', () => {
+  it('asks generate for the JSON envelope and hands its verdict on whole', async () => {
+    const answer = recordedGenerate();
+    const { client, calls } = clientReturning(() => replay(answer));
+    const { files, writes } = recordingFiles();
+
+    const result = (await runGenerate(
+      client,
+      { standard: 'xrechnung', output: 'xml', invoice: { number: 'INV-1' }, verify: true },
+      files,
+    )) as Record<string, unknown>;
+
+    expect(calls[0].headers.get('accept')).toContain('application/json');
+    const sent = answer.body.data.validationResult;
+    expect(result.validationResult).toEqual(sent);
+    expect(typeof sent.verificationBadgeLabel).toBe('string');
+    expect((result.validationResult as Record<string, unknown>).verificationBadgeLabel).toBe(
+      sent.verificationBadgeLabel,
+    );
+    // The document still goes on as the file, decoded from the envelope.
+    const document = Buffer.from(answer.body.data.output, 'base64');
+    expect(Buffer.from(writes[0].data).equals(document)).toBe(true);
+    expect(result.xml).toBe(document.toString('utf8'));
+    expect(result.schematronVersion).toBe(answer.headers['x-schematron-version']);
+  });
+
+  it('adds no check depth the API did not state', async () => {
+    const answer = recordedGenerate();
+    const verdict = answer.body.data.validationResult;
+    delete verdict.verificationBadge;
+    delete verdict.verificationBadgeLabel;
+    delete verdict.verificationTier;
+    const { client } = clientReturning(() => replay(answer));
+    const { files } = recordingFiles();
+
+    const result = (await runGenerate(
+      client,
+      { standard: 'xrechnung', output: 'xml', invoice: { number: 'INV-1' }, verify: true },
+      files,
+    )) as Record<string, unknown>;
+
+    expect(result.validationResult).toEqual(verdict);
+    expect(result.validationResult).not.toHaveProperty('verificationBadgeLabel');
+  });
+
+  it("returns validate's verdict as the API sent it, label included", async () => {
+    const sent = recordedGenerate().body.data.validationResult;
+    const { client } = clientReturning(() => jsonResponse(sent));
+
+    const result = await runValidate(client, {
+      inputSource: 'text',
+      documentText: '<Invoice/>',
+      contentType: 'auto',
+    });
+
+    expect(result).toEqual(sent);
+  });
+});
+
+describe('the Convert Target Format description', () => {
+  // An XML source to Factur-X or ZUGFeRD returns CII XML; a PDF comes back only
+  // from a hybrid PDF source, in one of the two forms the SDK's line names.
+  it('says an XML source returns XML, and carries the SDK line for a PDF answer', () => {
+    const { description } = convertAction.props.targetFormat;
+    expect(description).toContain('an XML source comes back as the CII XML, not a PDF');
+    expect(description).toContain(CONVERT_PDF_LINE);
   });
 });
 

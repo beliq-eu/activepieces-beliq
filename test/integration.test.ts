@@ -53,6 +53,11 @@ describe.skipIf(!API_KEY)('beliq live API', () => {
         memoryFiles(),
       )) as Record<string, unknown>;
       expect(generated.fileName).toBe('invoice.xml');
+      // Generate asks for the envelope, so the verdict comes with the document,
+      // and with it the check depth the API states for XRechnung.
+      const generatedVerdict = generated.validationResult as Record<string, unknown>;
+      expect(generatedVerdict.valid).toBe(true);
+      expect(typeof generatedVerdict.verificationBadgeLabel).toBe('string');
       const xml = generated.xml as string;
       expect(xml).toContain('<');
 

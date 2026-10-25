@@ -1,6 +1,6 @@
 {
   "name": "Generate an XRechnung on a schedule",
-  "description": "Generate a compliant XRechnung XML document on a schedule, ready to hand to your access point or archive step.",
+  "description": "Generate an XRechnung XML document on a schedule, with the API's verdict on it, ready to hand to your access point or archive step.",
   "tags": ["e-invoice", "xrechnung", "generate", "beliq"],
   "pieces": ["@activepieces/piece-schedule", "activepieces-beliq"],
   "blogUrl": "",

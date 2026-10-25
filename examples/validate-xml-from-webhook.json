@@ -1,6 +1,6 @@
 {
   "name": "Validate an invoice from a webhook",
-  "description": "Receive an XML invoice on a webhook and check it against beliq's authority-pinned rules, returning a structured verdict.",
+  "description": "Receive an XML invoice on a webhook and check it with beliq, returning the API's verdict with the check depth it states.",
   "tags": ["e-invoice", "validate", "beliq"],
   "pieces": ["@activepieces/piece-webhook", "activepieces-beliq"],
   "blogUrl": "",

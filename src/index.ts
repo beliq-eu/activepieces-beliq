@@ -9,7 +9,7 @@ import { beliqAuth } from './lib/common/auth';
 export const beliq = createPiece({
   displayName: 'beliq',
   description:
-    'Generate, validate, parse, and convert EU-compliant e-invoices (XRechnung, ZUGFeRD, Factur-X, Peppol BIS) against authority-pinned, drift-checked rules, and generate the Schema-checked FatturaPA, Facturae, e-SLOG and KSeF FA(3).',
+    'Validate, generate, convert and parse EU e-invoices with the beliq API.',
   auth: beliqAuth,
   minimumSupportedRelease: '0.82.0',
   logoUrl: 'https://beliq.eu/beliq-avatar-light.png',
