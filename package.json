@@ -1,7 +1,7 @@
 {
   "name": "activepieces-beliq",
   "version": "0.3.0",
-  "description": "beliq connector for Activepieces: validate, generate, convert and parse EU e-invoices with the beliq API from Activepieces.",
+  "description": "beliq connector for Activepieces: validate, generate, convert and parse EU e-invoices with the beliq API.",
   "keywords": [
     "activepieces",
     "activepieces-piece",

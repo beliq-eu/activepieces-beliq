@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { Beliq } from '@beliq/sdk';
 import { runGenerate, SAMPLE_INVOICE } from '../src/lib/actions/generate';
@@ -60,6 +61,8 @@ describe.skipIf(!API_KEY)('beliq live API', () => {
       expect(typeof generatedVerdict.verificationBadgeLabel).toBe('string');
       const xml = generated.xml as string;
       expect(xml).toContain('<');
+      // The API hashes the bytes it returns, so the document reproduces it.
+      expect(generated.sha256).toBe(createHash('sha256').update(xml, 'utf8').digest('hex'));
 
       const verdict = (await runValidate(client, {
         inputSource: 'text',

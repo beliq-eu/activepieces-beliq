@@ -25,7 +25,7 @@ export const validateAction = createAction({
   name: 'validate_invoice',
   displayName: 'Validate Invoice',
   description:
-    'Check an XML or PDF invoice against the rule packs and schemas beliq lists for its format. The verdict carries verificationBadgeLabel, the check depth the API states for it; a verdict without that field states none.',
+    'Check an XML or PDF invoice against the rule packs and schemas beliq lists for its format. For a PDF, the verdict is about the embedded invoice XML only: the PDF itself is not checked, and pdfInput names the file that was read. The verdict carries verificationBadgeLabel, the check depth the API states for it; a verdict without that field states none.',
   props: {
     ...documentInputProps,
     format: Property.StaticDropdown({

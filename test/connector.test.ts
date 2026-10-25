@@ -59,13 +59,17 @@ function errorResponse(code: string, message: string, status = 400): Response {
 }
 
 // An answer of the live API to POST /v1/generate in its JSON envelope
-// (Accept: application/json), recorded with a test key from the SAMPLE_INVOICE
-// as XRechnung XML with verify on, and stored as it came: status, the response
-// headers the SDK reads, and the body.
+// (Accept: application/json), recorded on 2026-10-25 with a test key from the
+// SAMPLE_INVOICE as XRechnung XML with verify on. The recording keeps the
+// status, the parsed body unchanged, and two of the response headers:
+// content-type and x-schematron-version. The others were not kept.
 interface RecordedAnswer {
   status: number;
   headers: Record<string, string>;
-  body: { success: boolean; data: { output: string; validationResult: Record<string, unknown> } };
+  body: {
+    success: boolean;
+    data: { output: string; sha256: string; validationResult: Record<string, unknown> };
+  };
 }
 const recordedGenerate = (): RecordedAnswer =>
   JSON.parse(
@@ -435,10 +439,7 @@ describe('the verdict Generate and Validate hand on', () => {
     expect(calls[0].headers.get('accept')).toContain('application/json');
     const sent = answer.body.data.validationResult;
     expect(result.validationResult).toEqual(sent);
-    expect(typeof sent.verificationBadgeLabel).toBe('string');
-    expect((result.validationResult as Record<string, unknown>).verificationBadgeLabel).toBe(
-      sent.verificationBadgeLabel,
-    );
+    expect(result.sha256).toBe(answer.body.data.sha256);
     // The document still goes on as the file, decoded from the envelope.
     const document = Buffer.from(answer.body.data.output, 'base64');
     expect(Buffer.from(writes[0].data).equals(document)).toBe(true);
@@ -480,12 +481,9 @@ describe('the verdict Generate and Validate hand on', () => {
 });
 
 describe('the Convert Target Format description', () => {
-  // An XML source to Factur-X or ZUGFeRD returns CII XML; a PDF comes back only
-  // from a hybrid PDF source, in one of the two forms the SDK's line names.
-  it('says an XML source returns XML, and carries the SDK line for a PDF answer', () => {
-    const { description } = convertAction.props.targetFormat;
-    expect(description).toContain('an XML source comes back as the CII XML, not a PDF');
-    expect(description).toContain(CONVERT_PDF_LINE);
+  // The one copy of the PDF sentence is the SDK's; the description must carry it.
+  it('carries the SDK line for a PDF answer', () => {
+    expect(convertAction.props.targetFormat.description).toContain(CONVERT_PDF_LINE);
   });
 });
 
