@@ -1,15 +1,15 @@
 # activepieces-beliq
 
-An [Activepieces](https://www.activepieces.com) community piece for [beliq](https://beliq.eu), a REST API that generates, validates, parses, and converts EU-compliant e-invoices (XRechnung, ZUGFeRD, Factur-X, Peppol BIS) against authority-pinned, drift-checked rules. It also generates FatturaPA, Facturae, e-SLOG and KSeF FA(3), which are Schema-checked: see [Format coverage](#format-coverage).
+An [Activepieces](https://www.activepieces.com) community piece: validate, generate, convert and parse EU e-invoices with the [beliq](https://beliq.eu) API from Activepieces. [Format coverage](#format-coverage) says which formats each action carries.
 
 One piece, four actions:
 
-- **Generate Invoice** - build a compliant document (XML or PDF) from an EN 16931 invoice object.
-- **Validate Invoice** - check an XML or PDF invoice against the authority-pinned rules and get a structured verdict.
+- **Generate Invoice** - build an e-invoice document (XML or PDF) from an EN 16931 invoice object, with the API's verdict on its invoice XML.
+- **Validate Invoice** - check an XML or PDF invoice against the rule packs and schemas beliq lists for its format, and get a structured verdict. For a PDF, the verdict is about the embedded invoice XML; the PDF itself is not checked.
 - **Parse Invoice** - extract a structured EN 16931 invoice object from an XML or PDF document.
 - **Convert Invoice** - convert a document from one EN 16931 format to another.
 
-beliq validates and produces the compliant document. Transmission, archiving, and tax reporting stay with your access point or ERP.
+beliq produces and checks the document. Transmission, archiving, and tax reporting stay with your access point or ERP.
 
 ## Installation
 
@@ -25,7 +25,19 @@ Create a **beliq** connection with an API key from [dashboard.beliq.eu](https://
 
 **Validate**, **Parse**, and **Convert** read the document from either a pasted **Text** field (the invoice XML) or a **File** from a previous step (XML or PDF). The **Content Type** auto-detects PDF vs XML from the bytes; set it explicitly to override.
 
-**Generate** and **Convert** return the produced document as a **File** you can pass to the next step, alongside metadata (content type, size, and the response details: Schematron version, PDF kind, source/target format, lost elements). Generate also returns the XML text directly when the output is XML.
+**Generate** and **Convert** return the produced document as a **File** you can pass to the next step, alongside metadata (content type, size, and the response details: Schematron version, PDF kind, source/target format, lost elements). Generate also returns the XML text directly when the output is XML, `sha256`, the SHA-256 the API computed over the document it returned (a hash of the file reproduces it), and the API's verdict in `validationResult`.
+
+**Convert** to Factur-X or ZUGFeRD returns a PDF only for a hybrid PDF source. An XML source comes back as the CII XML, not as a PDF: to build a hybrid PDF from invoice data, use **Generate Invoice** with Output PDF. The **Target Format** description in the piece says which PDF comes back, and the [convert reference](https://docs.beliq.eu/api-reference/convert/#a-pdf-sent-for-a-zugferd-or-factur-x-target) gives the detail.
+
+## The verdict
+
+**Validate** returns the API's verdict as it came, and **Generate** returns it in `validationResult`. Generate's verdict is on the invoice XML: the XML returned, or the XML embedded in a hybrid PDF; for a PDF visualization, the XML it was rendered from, which is not returned. Fields worth knowing:
+
+- `verified`: whether a ruleset ran. With **Validate Result** off, Generate's `validationResult` has `verified: false`: nothing was checked, and `valid` says nothing about the document. Read `verified` before `valid`.
+- `valid`: whether the document passed the rule packs and schemas listed for its format, in the stated versions. It does not mean every recipient, validation tool or tax authority accepts it.
+- `pdfInput`: present when Validate read a PDF. The verdict is then about the embedded invoice XML only, and the PDF itself is not checked (`containerChecked` is always `false`); `attachmentName` and `attachmentFoundBy` say which file was read.
+- `verificationBadgeLabel`: the check depth the API states for this verdict, as the API sends it. A verdict without it states none. [How verification works](https://docs.beliq.eu/compliance/how-verification-works/) explains each depth.
+- `franceCtcBlockingRuleIds`: the French CTC (Flux 2) rule ids the document trips, which the API reports as blocking its transmission, when that rule pack ran. It is a separate answer from `valid` and can come with `valid: true`; the [validate reference](https://docs.beliq.eu/api-reference/validate/) says why.
 
 ## Anything not in the UI?
 
@@ -33,10 +45,7 @@ Every action has an **Advanced (JSON)** field that is deep-merged into the reque
 
 ## Format coverage
 
-The Standard dropdown of **Generate Invoice** carries every standard `POST /v1/generate` accepts, plus the NLCIUS profile of Peppol BIS. `GET https://api.beliq.eu/v1/rulesets` publishes each format with a badge saying how deep its check goes:
-
-- **Authority-checked** (the authority's own rules): XRechnung, ZUGFeRD, Factur-X, Peppol BIS and NLCIUS.
-- **Schema-checked** (structure only, no business rules): FatturaPA, Facturae, e-SLOG and KSeF FA(3). Their authority publishes no machine-readable business rules.
+The Standard dropdown of **Generate Invoice** carries every standard `POST /v1/generate` accepts, plus the NLCIUS profile of Peppol BIS. How deep beliq's check goes differs by format: [`GET /v1/rulesets`](https://docs.beliq.eu/api-reference/rulesets/), which needs no API key, lists each format beliq offers, with its rule pack, version and badge. A verdict carries the depth the API states for it in `verificationBadgeLabel`.
 
 A national standard reads fields of its own from the **Invoice (JSON)** object. The [generate reference](https://docs.beliq.eu/api-reference/generate/) lists them, and the [format reference](https://docs.beliq.eu/format-reference/overview/) has a page per country.
 
@@ -54,7 +63,7 @@ Importable flow templates live in [`examples/`](./examples), one per use case. I
 
 - `validate-xml-from-webhook.json` - validate an XML invoice received on a webhook.
 - `generate-xrechnung-scheduled.json` - generate an XRechnung document on a schedule.
-- `convert-ubl-to-zugferd.json` - convert a UBL invoice from a webhook into a ZUGFeRD hybrid PDF.
+- `convert-ubl-to-zugferd.json` - convert a UBL invoice from a webhook into ZUGFeRD (EN 16931) CII XML.
 
 ## Development
 

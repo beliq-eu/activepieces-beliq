@@ -87,9 +87,14 @@ export async function runGenerate(
   }
 
   try {
-    const result = await client.generate(input);
+    // Always the JSON envelope: it is the only response that carries the
+    // verdict, and with it the check depth the API states for it. The API does
+    // the same work for either shape, and the document still goes on as a file.
+    const result = await client.generate({ ...input, seal: true });
     const out = await writeDocument(files, result, 'invoice');
     if (result.xml) out['xml'] = result.xml;
+    if (result.sha256) out['sha256'] = result.sha256;
+    if (result.validationResult) out['validationResult'] = result.validationResult;
     return out;
   } catch (error) {
     throw mapError(error);
@@ -101,12 +106,12 @@ export const generateAction = createAction({
   name: 'generate_invoice',
   displayName: 'Generate Invoice',
   description:
-    'Build a compliant e-invoice document (XML or PDF) from an EN 16931 invoice object.',
+    "Build an e-invoice document (XML or PDF) from an EN 16931 invoice object. The output carries the API's verdict in validationResult. The verdict is on the invoice XML: the XML returned, or the XML embedded in a hybrid PDF; for a PDF visualization, the XML it was rendered from, which is not returned. Its verificationBadgeLabel is the check depth the API states; a verdict without that field states none.",
   props: {
     standard: Property.StaticDropdown({
       displayName: 'Standard',
       description:
-        'The e-invoice standard to generate. FatturaPA, Facturae, e-SLOG and KSeF FA(3) are Schema-checked: structure only, no business rules. KSeF FA(3) covers ordinary VAT invoices in PLN between Polish parties, at VAT rates 23, 22, 8, 7 and 5; docs.beliq.eu/format-reference/poland states the full scope. beliq does not operate KSeF submission.',
+        'The e-invoice standard to generate. How deep the check goes differs by format: GET /v1/rulesets (docs.beliq.eu/api-reference/rulesets) lists each format beliq offers, with its rule pack, version and badge. KSeF FA(3) covers ordinary VAT invoices in PLN between Polish parties, at VAT rates 23, 22, 8, 7 and 5; docs.beliq.eu/format-reference/poland states the full scope. beliq does not operate KSeF submission.',
       required: true,
       defaultValue: 'xrechnung',
       options: { disabled: false, options: STANDARD_OPTIONS },
@@ -143,7 +148,8 @@ export const generateAction = createAction({
     }),
     verify: Property.Checkbox({
       displayName: 'Validate Result',
-      description: 'Validate the generated document before returning (fails closed on a bad result).',
+      description:
+        'Validate the generated document before returning (fails closed on a bad result). Off, validationResult has verified: false: no ruleset ran, nothing was checked, and its valid says nothing about the document. Read verified before valid.',
       required: false,
       defaultValue: true,
     }),

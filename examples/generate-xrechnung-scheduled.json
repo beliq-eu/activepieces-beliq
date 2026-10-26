@@ -1,6 +1,6 @@
 {
   "name": "Generate an XRechnung on a schedule",
-  "description": "Generate a compliant XRechnung XML document on a schedule, ready to hand to your access point or archive step.",
+  "description": "Generate an XRechnung XML document on a schedule, with the API's verdict on that XML, ready to hand to your access point or archive step.",
   "tags": ["e-invoice", "xrechnung", "generate", "beliq"],
   "pieces": ["@activepieces/piece-schedule", "activepieces-beliq"],
   "blogUrl": "",
@@ -29,7 +29,7 @@
         "displayName": "Generate Invoice",
         "settings": {
           "pieceName": "activepieces-beliq",
-          "pieceVersion": "~0.2.0",
+          "pieceVersion": "~0.3.0",
           "pieceType": "CUSTOM",
           "packageType": "REGISTRY",
           "actionName": "generate_invoice",

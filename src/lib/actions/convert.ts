@@ -5,6 +5,7 @@ import type {
   ConvertTargetFormat,
   FacturxProfile,
 } from '@beliq/sdk';
+import { CONVERT_PDF_LINE } from '@beliq/sdk/helpers';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { beliqAuth } from '../common/auth';
 import { asJsonObject, createClient, mapError } from '../common/client';
@@ -58,7 +59,7 @@ export const convertAction = createAction({
     }),
     targetFormat: Property.StaticDropdown({
       displayName: 'Target Format',
-      description: 'The format to convert the document to.',
+      description: `The format to convert the document to. For Factur-X or ZUGFeRD, an XML source comes back as the CII XML, not a PDF: a PDF comes back only from a hybrid PDF source. ${CONVERT_PDF_LINE}`,
       required: true,
       defaultValue: 'ubl',
       options: { disabled: false, options: CONVERT_TARGET_OPTIONS },
