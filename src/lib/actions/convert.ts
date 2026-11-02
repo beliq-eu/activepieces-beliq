@@ -48,7 +48,7 @@ export const convertAction = createAction({
   name: 'convert_invoice',
   displayName: 'Convert Invoice',
   description:
-    'Convert an invoice document from one EN 16931 format to another. lostElements lists what the target format could not carry. When that list would pass the API\'s 6 KB header cap, it holds one { truncated: true } entry instead, and lostElementsCount stays the exact count.',
+    'Convert an invoice document from one EN 16931 format to another. lostElements lists the source elements the engine recorded as having no target equivalent; a loss it does not detect is not listed. When that list would pass the API\'s 6 KB header cap, it holds one { truncated: true } entry instead, and lostElementsCount stays the exact count.',
   props: {
     ...documentInputProps,
     sourceFormat: Property.StaticDropdown({
