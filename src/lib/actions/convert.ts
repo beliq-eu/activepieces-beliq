@@ -47,7 +47,8 @@ export const convertAction = createAction({
   auth: beliqAuth,
   name: 'convert_invoice',
   displayName: 'Convert Invoice',
-  description: 'Convert an invoice document from one EN 16931 format to another.',
+  description:
+    'Convert an invoice document from one EN 16931 format to another. lostElements lists what the target format could not carry. When that list would pass the API\'s 6 KB header cap, it holds one { truncated: true } entry instead, and lostElementsCount stays the exact count.',
   props: {
     ...documentInputProps,
     sourceFormat: Property.StaticDropdown({
