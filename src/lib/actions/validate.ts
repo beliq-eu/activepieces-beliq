@@ -30,7 +30,7 @@ export const validateAction = createAction({
     ...documentInputProps,
     format: Property.StaticDropdown({
       displayName: 'Format',
-      description: 'Hint the expected syntax, or auto-detect from the document.',
+      description: 'Hint the expected format, or auto-detect from the document.',
       required: false,
       defaultValue: 'auto',
       options: { disabled: false, options: VALIDATE_FORMAT_OPTIONS },

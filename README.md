@@ -25,7 +25,7 @@ Create a **beliq** connection with an API key from [dashboard.beliq.eu](https://
 
 **Validate**, **Parse**, and **Convert** read the document from either a pasted **Text** field (the invoice XML) or a **File** from a previous step (XML or PDF). The **Content Type** auto-detects PDF vs XML from the bytes; set it explicitly to override.
 
-**Generate** and **Convert** return the produced document as a **File** you can pass to the next step, alongside metadata (content type, size, and the response details: Schematron version, PDF kind, source/target format, lost elements). Generate also returns the XML text directly when the output is XML, `sha256`, the SHA-256 the API computed over the document it returned (a hash of the file reproduces it), and the API's verdict in `validationResult`.
+**Generate** and **Convert** return the produced document as a **File** you can pass to the next step, alongside metadata (content type, size, and the response details: Schematron version, PDF kind, source/target format, lost elements). Each `lostElements` entry of Convert has the `path`, `value`, `reason`, `severity` and `acceptableLoss` that [the LostElement schema](https://docs.beliq.eu/api-reference/convert/#lostelement-schema) describes; when the list would pass the API's 6 KB header cap, it holds one `{ "truncated": true }` entry instead of the losses, and `lostElementsCount` stays the exact count. Generate also returns the XML text directly when the output is XML, `sha256`, the SHA-256 the API computed over the document it returned (a hash of the file reproduces it), and the API's verdict in `validationResult`.
 
 **Convert** to Factur-X or ZUGFeRD returns a PDF only for a hybrid PDF source. An XML source comes back as the CII XML, not as a PDF: to build a hybrid PDF from invoice data, use **Generate Invoice** with Output PDF. The **Target Format** description in the piece says which PDF comes back, and the [convert reference](https://docs.beliq.eu/api-reference/convert/#a-pdf-sent-for-a-zugferd-or-factur-x-target) gives the detail.
 
@@ -56,6 +56,8 @@ beliq generates and validates the document. Transmission (Peppol, PA, KSeF, SDI)
 Only ZUGFeRD and Factur-X have a hybrid PDF, a PDF/A-3 with the XML embedded. For the other standards, PDF output is a visualization with no XML inside it, and the legal document is the XML. NLCIUS always returns XML.
 
 The **Convert Invoice** dropdowns are shorter than the Generate one because the API's own convert enums are: no national format is a conversion source or target.
+
+The Format dropdowns of **Validate Invoice** and **Parse Invoice** carry the formats `@beliq/sdk` offers for each operation, the national formats included where it offers them. A value of the API's `format` enum that the SDK leaves out (the SDK's [`src/constants.ts`](https://github.com/beliq-eu/beliq-sdk-node/blob/v0.6.0/src/constants.ts) states why) is still reachable as `format` through **Advanced (JSON)**.
 
 ## Example flows
 

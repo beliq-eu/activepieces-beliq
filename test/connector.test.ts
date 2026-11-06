@@ -521,6 +521,49 @@ describe('runConvert', () => {
     expect(result.targetFormat).toBe('ubl');
     expect(result.sourceFormat).toBe('cii');
   });
+
+  async function convertWith(lostElements: unknown[], lostElementsCount: number) {
+    const { client } = clientReturning(
+      () =>
+        new Response('<ubl>converted</ubl>', {
+          status: 200,
+          headers: {
+            'content-type': 'application/xml',
+            'x-lost-elements-count': String(lostElementsCount),
+            'x-lost-elements': JSON.stringify(lostElements),
+          },
+        }),
+    );
+    return (await runConvert(
+      client,
+      { inputSource: 'text', documentText: '<ubl/>', targetFormat: 'ubl' },
+      recordingFiles().files,
+    )) as Record<string, unknown>;
+  }
+
+  it('returns each lost element as the object the API sent', async () => {
+    // From the worked example at https://docs.beliq.eu/api-reference/convert/#lostelement-schema
+    const lost = {
+      path: '/Invoice/{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty/{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party/cbc:EndpointID',
+      value: null,
+      reason: 'Peppol endpoint stripped (target is not peppol-bis)',
+      severity: 'info',
+      acceptableLoss: true,
+    };
+    const result = await convertWith([lost], 1);
+    expect(result.lostElementsCount).toBe(1);
+    expect(result.lostElements).toEqual([lost]);
+  });
+
+  it('returns the one truncation entry of a list past the header cap, with the exact count', async () => {
+    const truncated = {
+      truncated: true,
+      reason: 'Audit list exceeded 6144 bytes (412 entries); see X-Lost-Elements-Count for the exact count.',
+    };
+    const result = await convertWith([truncated], 412);
+    expect(result.lostElementsCount).toBe(412);
+    expect(result.lostElements).toEqual([truncated]);
+  });
 });
 
 describe('resolveDocument', () => {
@@ -567,6 +610,10 @@ describe('option lists', () => {
   // which standards are offered, so a new one arrives here without a label.
   it('gives every generate target a label of its own', () => {
     expect(STANDARD_OPTIONS.filter((o) => o.label === o.value)).toEqual([]);
+  });
+
+  it('gives every validate format a label of its own', () => {
+    expect(VALIDATE_FORMAT_OPTIONS.filter((o) => o.label === o.value)).toEqual([]);
   });
 
   it('offers each standard only the Factur-X profiles it accepts', () => {
