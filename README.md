@@ -57,6 +57,8 @@ Only ZUGFeRD and Factur-X have a hybrid PDF, a PDF/A-3 with the XML embedded. Fo
 
 The **Convert Invoice** dropdowns are shorter than the Generate one because the API's own convert enums are: no national format is a conversion source or target.
 
+The Format dropdowns of **Validate Invoice** and **Parse Invoice** carry the formats `@beliq/sdk` offers for each operation, the national formats included where it offers them. A value of the API's `format` enum that the SDK leaves out, with its reason beside its lists, is still reachable as `format` through **Advanced (JSON)**.
+
 ## Example flows
 
 Importable flow templates live in [`examples/`](./examples), one per use case. Import them via **Flows -> Import Flow**:
