@@ -75,7 +75,6 @@ npm run build       # tsc -> dist/ + prepare-dist (publishable package layout)
 npm run typecheck   # src as built (CommonJS), and the tests as vitest runs them (ESM)
 npm run lint        # ESLint with type information, whole repository
 npm test            # unit tests (connector mapping, output shaping, error handling)
-npm run scrub:check # fail on em-dashes in UI/customer text
 ```
 
 The connector is a thin adapter over the published [`@beliq/sdk`](https://www.npmjs.com/package/@beliq/sdk): the SDK owns the wire format, and the dropdown value-spaces come straight from its `LIVE_*` lists, so they stay in sync with what beliq offers publicly. The tests drive a real SDK client with an injected request recorder, so the prop-to-request mapping, response parsing, and output shaping are all covered.
