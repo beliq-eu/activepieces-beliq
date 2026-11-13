@@ -43,6 +43,14 @@ jobs:
       - name: Scrub check (no em-dash)
         run: npm run scrub:check
 
+      - name: CHANGELOG.md has a heading for the package.json version
+        run: |
+          v="$(node -p "require('./package.json').version")"
+          grep -qE "^## ${v//./\\.} - [0-9]{4}-[0-9]{2}-[0-9]{2}\$" CHANGELOG.md || {
+            echo "::error::CHANGELOG.md has no '## $v - <date>' heading"
+            exit 1
+          }
+
   # test:integration drives the real run handlers against the live beliq API and
   # spends 4 documents (generate, validate, parse, convert; me() is quota-exempt).
   # BELIQ_API_KEY is a `blq_test_` sandbox key: it runs the full rule stack but
