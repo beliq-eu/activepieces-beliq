@@ -14,7 +14,10 @@ on npm without a tag. Dates are the npm publish date, in UTC.
 - Generate Invoice returns `sha256`, the hash the API computed over the
   document it returned.
 - The Standard dropdown of Generate Invoice adds FatturaPA (Italy), Facturae
-  (Spain), e-SLOG (Slovenia) and KSeF FA(3) (Poland).
+  (Spain), e-SLOG (Slovenia) and KSeF FA(3) (Poland). KSeF FA(3)
+  (provisional, structure-checked) is generated only within the scope that
+  https://docs.beliq.eu/format-reference/poland/ states. Beliq does not operate
+  KSeF submission: transmission via your chosen intermediary.
 
 ## 0.2.0 - 2026-07-24
 
