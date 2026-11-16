@@ -39,6 +39,14 @@ Create a **beliq** connection with an API key from [dashboard.beliq.eu](https://
 - `verificationBadgeLabel`: the check depth the API states for this verdict, as the API sends it. A verdict without it states none. [How verification works](https://docs.beliq.eu/compliance/how-verification-works/) explains each depth.
 - `franceCtcBlockingRuleIds`: the French CTC (Flux 2) rule ids the document trips, which the API reports as blocking its transmission, when that rule pack ran. It is a separate answer from `valid` and can come with `valid: true`; the [validate reference](https://docs.beliq.eu/api-reference/validate/) says why.
 
+## When beliq is unavailable
+
+Each action retries an outage for up to 7.5 minutes, such as a 503 `DATABASE_UNAVAILABLE` with `Retry-After: 30`, and each attempt ends after 90 seconds. So an action ends within 9 minutes, inside the 10 minutes Activepieces gives a run ([known limits](https://www.activepieces.com/docs/flows/known-limits)). When the outage lasts longer, the action fails with an error that starts with `beliq is unavailable for now`, says how many seconds to wait when beliq sent a `Retry-After`, and ends in the `(CODE)`.
+
+Leave the step's **Retry on Failure** off, as the example flows do. The action already retries what a retry can fix. Retry on Failure starts the whole action again on any failure, a 422 included, and a repeat after a 9-minute outage runs into the run's 10-minute limit.
+
+The connection test retries only for 5 seconds, so the connection dialog answers within 25 seconds.
+
 ## Anything not in the UI?
 
 Every action has an **Advanced (JSON)** field that is deep-merged into the request (the body for Generate, the query for Validate / Parse / Convert), so any API option not surfaced as a control is still reachable. [Format coverage](#format-coverage) says which formats each dropdown carries; see the full request and response schema at [docs.beliq.eu](https://docs.beliq.eu).

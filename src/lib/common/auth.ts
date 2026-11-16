@@ -1,6 +1,6 @@
 import { BeliqApiError } from '@beliq/sdk';
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { createClient, resolveAuth } from './client';
+import { CONNECTION_CHECK_FIT, createClient, resolveAuth } from './client';
 
 const AUTH_GUIDE = `Get an API key from the beliq dashboard (dashboard.beliq.eu, API Keys).
 
@@ -23,7 +23,7 @@ export const beliqAuth = PieceAuth.CustomAuth({
     }
     try {
       // GET /v1/me: 200 for a valid key, 401/403 for a bad one. No quota spent.
-      await createClient(auth).me();
+      await createClient(auth, CONNECTION_CHECK_FIT).me();
       return { valid: true };
     } catch (error) {
       const status = error instanceof BeliqApiError ? error.status : undefined;
