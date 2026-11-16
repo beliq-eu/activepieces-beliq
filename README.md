@@ -9,7 +9,7 @@ One piece, four actions:
 - **Parse Invoice** - extract a structured EN 16931 invoice object from an XML or PDF document.
 - **Convert Invoice** - convert a document from one EN 16931 format to another.
 
-beliq produces and checks the document. Transmission, archiving, and tax reporting stay with your access point or ERP.
+beliq covers three steps of an e-invoice: generate, validate, and deliver (in development). This piece runs the first two and also parses and converts documents; no action of it sends or files an invoice. Until delivery through beliq is available, transmission (Peppol, plateforme agréée, SDI) and tax-authority reporting stay with your access point or ERP. Archiving stays with you, and beliq does not operate KSeF submission.
 
 ## Installation
 
@@ -51,7 +51,7 @@ A national standard reads fields of its own from the **Invoice (JSON)** object. 
 
 KSeF FA(3) generation covers ordinary VAT invoices in PLN between Polish parties, at VAT rates 23, 22, 8, 7 and 5. The [Poland KSeF FA(3) reference](https://docs.beliq.eu/format-reference/poland/) states the full scope.
 
-beliq generates and validates the document. Transmission (Peppol, PA, KSeF, SDI), archiving, and tax-authority reporting are separate and remain your access point's job: beliq does not operate KSeF submission, and no action of this piece sends or files an invoice.
+No action of this piece sends or files an invoice, and beliq does not operate KSeF submission.
 
 Only ZUGFeRD and Factur-X have a hybrid PDF, a PDF/A-3 with the XML embedded. For the other standards, PDF output is a visualization with no XML inside it, and the legal document is the XML. NLCIUS always returns XML.
 
