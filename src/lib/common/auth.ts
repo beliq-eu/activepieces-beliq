@@ -1,6 +1,6 @@
-import { BeliqApiError } from '@beliq/sdk';
+import { BeliqApiError, retryClass } from '@beliq/sdk';
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { CONNECTION_CHECK_FIT, createClient, resolveAuth } from './client';
+import { CONNECTION_CHECK_FIT, createClient, mapError, resolveAuth } from './client';
 
 const AUTH_GUIDE = `Get an API key from the beliq dashboard (dashboard.beliq.eu, API Keys).
 
@@ -29,6 +29,9 @@ export const beliqAuth = PieceAuth.CustomAuth({
       const status = error instanceof BeliqApiError ? error.status : undefined;
       if (status === 401 || status === 403) {
         return { valid: false, error: 'Invalid beliq API key.' };
+      }
+      if (retryClass(error) === 'budget') {
+        return { valid: false, error: `${mapError(error).message}. The key was not checked.` };
       }
       const detail = status ? `the API returned HTTP ${status}` : 'the API was unreachable';
       return {

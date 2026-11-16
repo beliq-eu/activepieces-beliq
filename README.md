@@ -41,7 +41,7 @@ Create a **beliq** connection with an API key from [dashboard.beliq.eu](https://
 
 ## When beliq is unavailable
 
-Each action retries an outage for up to 7.5 minutes, such as a 503 `DATABASE_UNAVAILABLE` with `Retry-After: 30`, and each attempt ends after 90 seconds. So an action ends within 9 minutes, inside the 10 minutes Activepieces gives a run ([known limits](https://www.activepieces.com/docs/flows/known-limits)). When the outage lasts longer, the action fails with an error that starts with `beliq is unavailable for now`, says how many seconds to wait when beliq sent a `Retry-After`, and ends in the `(CODE)`.
+Each action retries an outage for up to 7.5 minutes, such as a 503 `DATABASE_UNAVAILABLE` with `Retry-After: 30`, and each attempt ends after 90 seconds. So an action ends within 9 minutes, inside the 10 minutes Activepieces gives a run ([known limits](https://www.activepieces.com/docs/flows/known-limits)). The 10 minutes are for the whole run: in a long outage, a flow with two beliq actions, or with slow steps before one, can reach the limit before the error. The same holds for a self-hosted instance whose `AP_FLOW_TIMEOUT_SECONDS` is below 600. When the outage lasts longer, the action fails with an error that starts with `beliq is unavailable for now`, says how many seconds to wait when beliq sent a `Retry-After`, and ends in the `(CODE)`.
 
 Leave the step's **Retry on Failure** off, as the example flows do. The action already retries what a retry can fix. Retry on Failure starts the whole action again on any failure, a 422 included, and a repeat after a 9-minute outage runs into the run's 10-minute limit.
 

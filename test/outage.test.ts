@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Beliq } from '@beliq/sdk';
+import { runGenerate } from '../src/lib/actions/generate';
 import { runValidate } from '../src/lib/actions/validate';
 import { beliqAuth } from '../src/lib/common/auth';
 import { CONNECTION_CHECK_FIT, STEP_FIT } from '../src/lib/common/client';
@@ -130,6 +132,24 @@ describe('an action during an outage ends inside the 600-second run limit', () =
   });
 });
 
+describe('a failure that is not beliq\'s', () => {
+  it('passes a refused write to the file store through, not as a beliq outage', async () => {
+    const answer = JSON.parse(
+      readFileSync(new URL('./fixtures/live-generate-xrechnung-envelope.json', import.meta.url), 'utf8'),
+    ) as { status: number; headers: Record<string, string>; body: unknown };
+    handler = (_req, res) => {
+      res.writeHead(answer.status, answer.headers);
+      res.end(JSON.stringify(answer.body));
+    };
+    const refused = new TypeError('fetch failed', { cause: Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' }) });
+    const files = { write: async () => { throw refused; } };
+    const client = new Beliq({ apiKey: 'test-key', baseUrl: origin, ...STEP_FIT });
+    await expect(
+      runGenerate(client, { standard: 'xrechnung', output: 'xml', invoice: { number: 'INV-1' } }, files as never),
+    ).rejects.toBe(refused);
+  });
+});
+
 describe('the connection check answers while the user waits on the dialog', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', (url: string | URL, init?: RequestInit) =>
@@ -155,7 +175,11 @@ describe('the connection check answers while the user waits on the dialog', () =
     handler = (_req, res) => databaseUnavailable(res, 30);
     const started = performance.now();
     const result = await beliqAuth.validate!({ auth: { apiKey: 'blq_test_x' } } as never);
-    expect(result).toMatchObject({ valid: false });
+    expect(result).toEqual({
+      valid: false,
+      error:
+        'beliq is unavailable for now: database unavailable. Try again in 30 seconds (DATABASE_UNAVAILABLE). The key was not checked.',
+    });
     expect(requests).toBe(1);
     expect(performance.now() - started).toBeLessThan(CONNECTION_DIALOG_MS);
   });
