@@ -16,7 +16,9 @@ on npm without a tag. Dates are the npm publish date, in UTC.
   whole run, and why a step's Retry on Failure should stay off.
 - When the outage lasts longer, the action fails with an error that starts
   with `beliq is unavailable for now`, says how many seconds to wait when
-  beliq sent a `Retry-After`, and ends in the `(CODE)`. Any other error with
+  beliq sent a `Retry-After`, and ends in the `(CODE)` when beliq answered
+  with one. When the API could not be reached, the error says so and that
+  beliq did not say when to try again. Any other error with
   a `Retry-After`, such as a 429 `RATE_LIMITED`, names the wait too.
 - The connection test retries for 5 seconds only, so the connection dialog
   answers within 25 seconds. During an outage it says that beliq is
