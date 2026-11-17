@@ -9,12 +9,13 @@ import { beliqAuth } from '../src/lib/common/auth';
 import { CONNECTION_CHECK_FIT, STEP_FIT } from '../src/lib/common/client';
 
 // The real validate action and a real SDK client against a real HTTP server on
-// 127.0.0.1. For the action, the server's `Retry-After: 30`, Activepieces'
-// 600-second limit and the fit are all scaled by SCALE; the SDK's own backoff
-// waits are not. The connection check runs unscaled through its own client,
+// 127.0.0.1. For the action, Activepieces' 600-second limit and the fit are
+// scaled by SCALE; the SDK's own backoff waits are not. The server's
+// `Retry-After: 15` scaled would be half a second, under the header's grain of
+// one second, so the stub sends 1. The connection check runs unscaled through its own client,
 // with global fetch only rewriting the fixed https://api.beliq.eu origin.
 const SCALE = 1 / 30;
-const RETRY_AFTER_S = 30 * SCALE;
+const RETRY_AFTER_S = 1;
 const HOST_LIMIT_MS = 600_000 * SCALE;
 const CONNECTION_DIALOG_MS = 30_000;
 const API_ORIGIN = 'https://api.beliq.eu';
