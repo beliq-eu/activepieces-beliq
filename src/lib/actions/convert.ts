@@ -35,12 +35,14 @@ export async function runConvert(
   if (isFacturxFamily(targetFormat) && props['targetProfile']) {
     options.targetProfile = props['targetProfile'] as FacturxProfile;
   }
+  let result: Awaited<ReturnType<Beliq['convert']>>;
   try {
-    const result = await client.convert(bytes, options);
-    return writeDocument(files, result, 'converted');
+    result = await client.convert(bytes, options);
   } catch (error) {
     throw mapError(error);
   }
+  // Outside the try, as in generate: a file-store failure is not a beliq outage.
+  return writeDocument(files, result, 'converted');
 }
 
 export const convertAction = createAction({

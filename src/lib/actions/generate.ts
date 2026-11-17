@@ -86,19 +86,22 @@ export async function runGenerate(
     input.template = 'standard';
   }
 
+  let result: Awaited<ReturnType<Beliq['generate']>>;
   try {
     // Always the JSON envelope: it is the only response that carries the
     // verdict, and with it the check depth the API states for it. The API does
     // the same work for either shape, and the document still goes on as a file.
-    const result = await client.generate({ ...input, seal: true });
-    const out = await writeDocument(files, result, 'invoice');
-    if (result.xml) out['xml'] = result.xml;
-    if (result.sha256) out['sha256'] = result.sha256;
-    if (result.validationResult) out['validationResult'] = result.validationResult;
-    return out;
+    result = await client.generate({ ...input, seal: true });
   } catch (error) {
     throw mapError(error);
   }
+  // Outside the try: a failed write to Activepieces' file store is the host's
+  // fault, and mapError would report a refused connection as a beliq outage.
+  const out = await writeDocument(files, result, 'invoice');
+  if (result.xml) out['xml'] = result.xml;
+  if (result.sha256) out['sha256'] = result.sha256;
+  if (result.validationResult) out['validationResult'] = result.validationResult;
+  return out;
 }
 
 export const generateAction = createAction({
