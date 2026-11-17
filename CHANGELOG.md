@@ -5,6 +5,26 @@ breaking change; the rest of its changes are in the git history between the
 version tags (https://github.com/beliq-eu/activepieces-beliq/tags). 0.1.0 is
 on npm without a tag. Dates are the npm publish date, in UTC.
 
+## 0.5.0 - 2026-11-17
+
+- Each action retries an outage for up to 7.5 minutes, such as a 503
+  `DATABASE_UNAVAILABLE` with `Retry-After: 30` or an API that cannot be
+  reached, and each attempt ends after 90 seconds. So an action ends within
+  9 minutes, inside the 10 minutes Activepieces gives a run. In 0.4.0 an
+  outage was retried 3 times, about 2 minutes at `Retry-After: 30`. The
+  README's "When beliq is unavailable" says why the 10 minutes are for the
+  whole run, and why a step's Retry on Failure should stay off.
+- When the outage lasts longer, the action fails with an error that starts
+  with `beliq is unavailable for now`, says how many seconds to wait when
+  beliq sent a `Retry-After`, and ends in the `(CODE)`. Any other error with
+  a `Retry-After`, such as a 429 `RATE_LIMITED`, names the wait too.
+- The connection test retries for 5 seconds only, so the connection dialog
+  answers within 25 seconds. During an outage it says that beliq is
+  unavailable and that the key was not checked.
+- The piece is on `@beliq/sdk` 0.7, up from 0.6.
+- The three example flows in `examples/` install the piece at `~0.5.0`.
+- The package includes this changelog.
+
 ## 0.4.0 - 2026-11-16
 
 - Breaking: Convert Invoice returns each `lostElements` entry as the object
