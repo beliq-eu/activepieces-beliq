@@ -172,13 +172,13 @@ describe('the connection check answers while the user waits on the dialog', () =
   });
 
   it('reports an outage at once instead of waiting it out', async () => {
-    handler = (_req, res) => databaseUnavailable(res, 30);
+    handler = (_req, res) => databaseUnavailable(res, 15);
     const started = performance.now();
     const result = await beliqAuth.validate!({ auth: { apiKey: 'blq_test_x' } } as never);
     expect(result).toEqual({
       valid: false,
       error:
-        'beliq is unavailable for now: database unavailable. Try again in 30 seconds (DATABASE_UNAVAILABLE). The key was not checked.',
+        'beliq is unavailable for now: database unavailable. Try again in 15 seconds (DATABASE_UNAVAILABLE). The key was not checked.',
     });
     expect(requests).toBe(1);
     expect(performance.now() - started).toBeLessThan(CONNECTION_DIALOG_MS);
