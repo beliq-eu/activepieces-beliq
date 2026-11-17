@@ -22,12 +22,12 @@ const published = {
   repository: pkg.repository,
   main: './src/index.js',
   engines: pkg.engines,
-  files: ['src'],
+  files: ['src', 'CHANGELOG.md'],
   publishConfig: pkg.publishConfig,
   dependencies: pkg.dependencies,
 };
 
 writeFileSync(join(dist, 'package.json'), JSON.stringify(published, null, 2) + '\n');
-for (const file of ['README.md', 'LICENSE']) {
+for (const file of ['README.md', 'LICENSE', 'CHANGELOG.md']) {
   copyFileSync(join(root, file), join(dist, file));
 }
