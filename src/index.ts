@@ -9,7 +9,7 @@ import { beliqAuth } from './lib/common/auth';
 export const beliq = createPiece({
   displayName: 'beliq',
   description:
-    'Validate, generate, convert and parse EU e-invoices with the beliq API.',
+    'Generate, validate, parse and convert EU e-invoices with the beliq API.',
   auth: beliqAuth,
   minimumSupportedRelease: '0.82.0',
   logoUrl: 'https://beliq.eu/beliq-avatar-light.png',

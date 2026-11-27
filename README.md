@@ -1,6 +1,6 @@
 # activepieces-beliq
 
-An [Activepieces](https://www.activepieces.com) community piece: validate, generate, convert and parse EU e-invoices with the [beliq](https://beliq.eu) API from Activepieces. [Format coverage](#format-coverage) says which formats each action carries.
+An [Activepieces](https://www.activepieces.com) community piece: generate, validate, parse and convert EU e-invoices with the [beliq](https://beliq.eu) API from Activepieces. [Format coverage](#format-coverage) says which formats each action carries.
 
 One piece, four actions:
 
@@ -9,7 +9,7 @@ One piece, four actions:
 - **Parse Invoice** - extract a structured EN 16931 invoice object from an XML or PDF document.
 - **Convert Invoice** - convert a document from one EN 16931 format to another.
 
-beliq covers three steps of an e-invoice: generate, validate, and deliver (in development). This piece runs the first two and also parses and converts documents; no action of it sends or files an invoice. Until delivery through beliq is available, transmission (Peppol, plateforme agréée, SDI) and tax-authority reporting stay with your access point or ERP. Archiving stays with you, and beliq does not operate KSeF submission.
+beliq does five things with an e-invoice: generate, validate, parse, convert and deliver (in development). This piece runs the first four; no action of it sends or files an invoice. Until delivery through beliq is available, transmission (Peppol, plateforme agréée, SDI) and tax-authority reporting stay with your access point or ERP. Archiving stays with you, and beliq does not operate KSeF submission.
 
 ## Installation
 
@@ -23,7 +23,7 @@ Create a **beliq** connection with an API key from [dashboard.beliq.eu](https://
 
 ## Document input
 
-**Validate**, **Parse**, and **Convert** read the document from either a pasted **Text** field (the invoice XML) or a **File** from a previous step (XML or PDF). The **Content Type** auto-detects PDF vs XML from the bytes; set it explicitly to override.
+**Validate**, **Parse** and **Convert** read the document from either a pasted **Text** field (the invoice XML) or a **File** from a previous step (XML or PDF). The **Content Type** auto-detects PDF vs XML from the bytes; set it explicitly to override.
 
 **Generate** and **Convert** return the produced document as a **File** you can pass to the next step, alongside metadata (content type, size, and the response details: Schematron version, PDF kind, source/target format, lost elements). Each `lostElements` entry of Convert has the `path`, `value`, `reason`, `severity` and `acceptableLoss` that [the LostElement schema](https://docs.beliq.eu/api-reference/convert/#lostelement-schema) describes; when the list would pass the API's 6 KB header cap, it holds one `{ "truncated": true }` entry instead of the losses, and `lostElementsCount` stays the exact count. Generate also returns the XML text directly when the output is XML, `sha256`, the SHA-256 the API computed over the document it returned (a hash of the file reproduces it), and the API's verdict in `validationResult`.
 
